@@ -1,0 +1,175 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage{fontspec}
+\setmainfont{TeX Gyre Pagella}
+\newfontfamily\headfont{Inter}[UprightFont=*-ExtraBold,BoldFont=*-ExtraBold,Extension=.otf,Path=/usr/share/fonts/opentype/inter/]
+\usepackage[a4paper,margin=2.3cm]{geometry}
+\usepackage{graphicx,booktabs,float,caption,array,xcolor,longtable}
+\usepackage{xurl}
+\usepackage[hidelinks]{hyperref}
+\usepackage{titlesec}
+\usepackage[round]{natbib}
+\usepackage{setspace}
+\setstretch{1.05}
+\renewcommand{\topfraction}{0.9}
+\renewcommand{\bottomfraction}{0.8}
+\renewcommand{\textfraction}{0.1}
+\renewcommand{\floatpagefraction}{0.75}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.55em}
+\titleformat{\section}{\headfont\Large}{\thesection}{0.8em}{}
+\titleformat{\subsection}{\headfont\large}{\thesubsection}{0.8em}{}
+\captionsetup{font=small,labelfont=bf}
+\urlstyle{same}
+\hypersetup{pdftitle={Where the World's Music Comes From},pdfauthor={Tristan Hotham}}
+
+\begin{document}
+\begin{center}
+{\Large\bfseries Where the World's Music Comes From\par}
+\vspace{0.4em}
+{\large The birthplaces of {{source.n_iso|int}} musicians and the home towns of bands in Wikidata,\\by city, genre, decade and gender\par}
+\vspace{1.2em}
+{\large Tristan Hotham\par}
+\vspace{0.3em}
+{\small Independent researcher\\
+ORCID: 0000-0003-4931-9349\\
+DOI: DOIPLACEHOLDER\par}
+\vspace{0.8em}
+2026
+\end{center}
+
+\begin{quote}
+\small
+\begin{center}\textbf{Abstract}\end{center}
+Where are musicians born, and where do bands begin? I use Wikidata, the open knowledge base behind Wikipedia, to map everyone it records with an occupation that is musician or any of its subclasses ({{source.n|int}} people) and every musical group ({{source.g_n|int}}). {{source.n_iso|int}} musicians ({{source.iso_pct|pc}}) have a birth country and {{source.n_pt|int}} a birthplace with coordinates; {{source.g_pt|int}} groups have a place of formation with coordinates. Grouping places into city areas, New York ({{areas.new_york.n|int}} musicians), London ({{areas.london.n|int}}), Paris ({{areas.paris.n|int}}) and Vienna ({{areas.vienna.n|int}}) lead for births, and Los Angeles ({{areas.los_angeles.b|int}}), New York and London for bands. Composers born before 1900 were {{contrast.comp_europe_pct|pc}} European, pop, rock and metal musicians born since 1940 only {{contrast.poprock_europe_pct|pc}}. Many genres have a clear home town: Kingston holds {{signature.by.reggae.pct|pc}} of reggae acts, Seoul {{signature.by.K-pop.pct|pc}} of K-pop acts, Rio de Janeiro {{signature.by.samba.pct|pc}} of samba acts, and Nashville's acts are {{genre_cities.country.lq.0.lq|f1}} times as likely as the world's to be country. Finland has {{countries.metal_per_m.0.metal_per_m|f1}} metal bands per million people. Women are {{women.pct|f1}}\% of musicians with a recorded gender, rising from {{women.by.1700.pct|f1}}\% of those born before 1800 to {{women.by.1990.pct|f1}}\% of those born in the 1990s, with large differences by kind of musician. Coverage is very uneven: a birth country is recorded for {{source.notable_bp_pct|f1}}\% of notable musicians but {{source.sl1_bp_pct|pc}} of those with at most one sitelink, and a formation place for {{source.g_loc_pct|pc}} of groups. The atlas maps the open record of music, not every musician.
+
+\textbf{Keywords:} musicians; bands; music geography; music scenes; genres; gender; Wikidata; open data; mapping
+\end{quote}
+
+\section{Introduction}
+Music has always had places. Histories of Western art music are organised around courts, churches and conservatories in a handful of central European cities; histories of popular music around scenes, from New Orleans and Memphis to Liverpool, Kingston, Seattle and Seoul \citep{connell, bennett}. Geographers have long mapped where musicians come from, starting with the birthplaces of American country and rock musicians \citep{carney}. A simple question cuts across these traditions: where were the world's musicians born, and where did its bands form?
+
+Wikidata \citep{wikidata} offers a way to ask it at a scale no single history can. It records hundreds of thousands of people with musical occupations, many with a place and date of birth, and more than a hundred thousand musical groups, some with a place and date of formation, and it links both to genres. Studies of notable people's birth and death places have shown how much structure such data hold, and how much they reflect the biases of their sources \citep{schich}. This paper maps musicians' birthplaces and bands' formation places by city, country, kind of musician, genre and decade, measures where each genre is concentrated, and tracks the share of women. It pairs the analysis with an interactive atlas (\url{{{meta.page}}}).
+
+The contribution is descriptive. Wikidata is not a census of musicians. Its coverage depends on which library catalogues and music databases have been imported and which people have Wikipedia articles, and its records of gender follow those of Wikipedia, where women are known to be under-represented \citep{wagner}. I report coverage alongside every result.
+
+\section{Data}
+\textbf{Musicians.} A query through the QLever SPARQL endpoint \citep{qlever}, retrieved in {{meta.retrieved}}, returned every human (P31 Q5) with an occupation (P106) that is musician (Q639669) or a subclass of it, with English label, occupation, place of birth (P19), that place's English label, coordinates (P625) and country (P17), date of birth (P569), sex or gender (P21) and number of sitelinks. The export was paged to avoid a time-out; it has {{source.n_rows|int}} rows (one per combination of values) for {{source.n|int}} people, the same number as a separate count of the set. Six lines lacked a line break and were repaired. {{source.n_occ_values|int}} occupations appear, from composer, singer and pianist to organist, rapper, kobzar and bertsolari. {{source.n_nolabel|int}} people have no English label.
+
+\textbf{Groups.} A second query returned every item that is an instance of musical group (Q215380) or a subclass, with type, location of formation (P740) and its coordinates and country, inception (P571), dissolution (P576), country of origin (P495) and sitelinks: {{source.g_rows|int}} rows for {{source.g_n|int}} groups. Groups include rock bands, idol groups and duos, and also {{source.g_ens|int}} choirs, orchestras and ensembles, identified from their type labels.
+
+\textbf{Genres.} Two further queries returned the genres (P136) of musicians and groups and the English labels of the {{genres.n_genre_values|int}} genres used.
+
+\textbf{Geography.} Natural Earth \citep{naturalearth} countries (1:10m for assigning points, 1:50m for display), land and populated places, with population estimates. All Wikidata content is CC0 and Natural Earth is public domain.
+
+{{TABLE_PIPELINE}}
+
+\section{Methods}
+\subsection{Places and countries}
+A musician's birthplace is the first place of birth in the result ({{source.n_multi_bp|int}} have more than one) and its point is that place's coordinates. {{source.n_country_bp|int}} birthplaces are themselves countries or former states (for example `Austrian Empire'); these give a country but no point. The birth country is the present-day Natural Earth country that the point falls in, else the place's Wikidata country matched to Natural Earth by Wikidata identifier, with a hand-made table of successors for former states. Where both are known they agree for {{source.agree_pct|pc}} of musicians. A group's place is its location of formation, and its country that of the place, else its country of origin.
+
+\subsection{City areas and per-head rates}
+Wikidata often records a district (Brooklyn, Hollywood, a Paris arrondissement) rather than a city. I assign each point to the nearest Natural Earth populated place of 200,000 people or more within 25 km, merging any such place within 25 km of a larger one, so that Liverpool and Manchester stay apart but Brooklyn counts with New York. {{source.in_area_pct|pc}} of musicians' points fall in one of {{areas.n_with|int}} city areas. Per-head rates divide by Natural Earth's present-day population: a rough guide, since most of these musicians were born when cities were smaller and in different proportion to each other.
+
+\subsection{Kinds of musician and genre families}
+I grouped the occupations into eight families (composers and arrangers, singers, instrumentalists, rappers and MCs, DJs and producers, conductors and bandleaders, songwriters, and other musicians, mostly the generic `musician') and the genres into thirteen families plus `other' (classical and opera; rock and punk; metal; pop; K-pop, J-pop and East Asian pop; hip hop; R\&B, soul, blues and gospel; jazz; electronic and dance; country; Latin; reggae, Caribbean and African popular; folk and traditional), using ordered rules on English labels checked against the most-used values. Both mappings are published with the data. A person or group belongs to every family of any of its occupations or genres; {{source.n_multi_fam|int}} people are in more than one occupation family. Genre shares are among genre-tagged acts only ({{source.genre_pct|pc}} of musicians and {{source.g_genre_pct|pc}} of groups have a genre).
+
+\subsection{Home towns of genres}
+For each of {{signature.n_genres|int}} named genres I count the acts (musicians born and groups formed) in each city area and report the city with most and its share of all such acts with a point. For the genre families I also compute a location quotient: a family's share of a city's genre-tagged acts divided by its share of all genre-tagged acts, for cities with 25 or more acts in the family and 40 or more tagged acts.
+
+\subsection{Decades, gender and notability}
+Musicians are placed in the decade of their birth (earliest valid year of P569, 800 to 2020; before 1800 pooled) and groups in the decade of their formation. Women and trans women are counted as women and men and trans men as men; {{women.o_n|int}} musicians have another gender recorded. Shares are among musicians with a recorded gender ({{source.gender_pct|pc}}). Notable musicians and groups are those with {{meta.notable|int}} or more sitelinks ({{source.n_notable|int}} musicians, {{source.g_notable|int}} groups), a measure of attention on Wikipedia and its sister projects, not of musical standing.
+
+\section{Results}
+\subsection{The map}
+Figure~\ref{fig:map} shows all {{source.n_pt|int}} birthplace points in hexagons. They are densest in central and western Europe, the eastern United States, Japan and Korea, and sparse across Africa and Central Asia. Europe accounts for {{countries.europe_pct|pc}} of musicians with a birth country, North America {{countries.by_cont.1.pct|pc}}, Asia {{countries.by_cont.2.pct|pc}}, South America {{countries.by_cont.3.pct|f1}}\%, Africa {{countries.africa_pct|f1}}\% and Oceania {{countries.by_cont.5.pct|f1}}\%. The maps of bands, of women and of notable musicians (Figure~\ref{fig:small}) differ in instructive ways: bands are concentrated in North America, western Europe and Japan, and notable musicians in the United States and Britain.
+
+\begin{figure}[tbp]\centering\includegraphics[width=\textwidth]{f_map.png}
+\caption{Birthplaces of {{source.n_pt|int}} musicians in Wikidata, counted in hexagons (Equal Earth projection).}\label{fig:map}\end{figure}
+
+\begin{figure}[tbp]\centering\includegraphics[width=\textwidth]{f_small_maps.png}
+\caption{Where bands formed (left), where women musicians were born (centre) and where notable musicians, with {{meta.notable|int}} or more sitelinks, were born (right).}\label{fig:small}\end{figure}
+
+\subsection{Cities}
+As a single Wikidata place, Vienna is the most common birthplace ({{places.top.0.n|int}}), ahead of New York City ({{places.top.1.n|int}}) and London ({{places.top.2.n|int}}). Grouped into city areas (Figure~\ref{fig:cities}, Table~\ref{tab:cities}), New York leads with {{areas.top.0.n|int}} musicians, then London, Paris, Vienna, Tokyo, Berlin and Prague; the ten largest areas hold {{areas.top10_pct|pc}} of all points. Per head of present population, the leaders are smaller central European cities, Tallinn, Prague, Brno and Erfurt, with more than 230 musicians per 100,000 residents; among cities of a million or more, Prague ({{areas.prague.per100k|f1}}) and Vienna ({{areas.vienna.per100k|f1}}) lead, against New York's {{areas.new_york.per100k|f1}} and Tokyo's {{areas.tokyo.per100k|f1}}. Bands have a different geography: Los Angeles has most ({{areas.los_angeles.b|int}}), then New York, London, Tokyo and San Francisco, and per head Ljubljana, Bergen, Malmö and Oslo.
+
+\begin{figure}[tbp]\centering\includegraphics[width=\textwidth]{f_cities.png}
+\caption{City areas (points within 25 km of a city of 200,000 or more) with most musicians born and most bands formed.}\label{fig:cities}\end{figure}
+
+{{TABLE_CITIES}}
+
+\subsection{Composers' Europe and the popular music world}
+The kinds of musician have different maps (Table~\ref{tab:fam}). Conductors and bandleaders ({{contrast.fam_cont.5.Europe|pc}} European), instrumentalists and composers are overwhelmingly European; rappers ({{contrast.fam_cont.3.North America|pc}} North American) and songwriters are as often North American as European, and singers are the most Asian family ({{contrast.fam_cont.1.Asia|pc}}). Composers born before 1900 ({{contrast.n_composers_pre1900|int}} with a point) were {{contrast.comp_europe_pct|f1}}\% European, led by Vienna ({{contrast.composers_pre1900.0.n|int}}), Paris ({{contrast.composers_pre1900.1.n|int}}), London, Prague, Berlin, Naples and Barcelona; pop, rock and metal musicians born in 1940 or later ({{contrast.n_poprock_post1940|int}}) were {{contrast.poprock_europe_pct|f1}}\% European and {{contrast.poprock_na_pct|f1}}\% North American, led by London, New York and Los Angeles (Figure~\ref{fig:contrast}).
+
+\begin{figure}[tbp]\centering\includegraphics[width=\textwidth]{f_contrast.png}
+\caption{Birthplaces of composers born before 1900 and of pop, rock and metal musicians born in 1940 or later.}\label{fig:contrast}\end{figure}
+
+{{TABLE_FAM}}
+
+\subsection{The home towns of genres}
+Most genres are spread across many cities, but several have a clear centre (Figure~\ref{fig:genres}, Table~\ref{tab:sig}). Cantopop is concentrated in Hong Kong ({{signature.by.cantopop.pct|pc}} of its acts), samba in Rio de Janeiro ({{signature.by.samba.pct|pc}}), grime in London ({{signature.by.grime.pct|pc}}), tango in Buenos Aires ({{signature.by.tango.pct|pc}}), K-pop in Seoul ({{signature.by.K-pop.pct|pc}}) and fado in Lisbon ({{signature.by.fado.pct|pc}}); reggae and dancehall in Kingston, Afrobeats in Lagos, grunge in Seattle and black metal in Oslo, with Bergen second. Country music is the exception that proves the measure: its acts are spread across the United States, so Nashville holds only {{signature.by.country music.pct|f1}}\% of them, yet Nashville's own acts are {{genre_cities.country.lq.0.lq|f1}} times as likely as the world's to be country. By the location quotient, reggae and its relatives are most concentrated in Kingston ({{genre_cities.reggae.lq.0.lq|f1}}), jazz in New Orleans ({{genre_cities.jazz.lq.0.lq|f1}}), hip hop in Atlanta ({{genre_cities.hiphop.lq.0.lq|f1}}) and soul and R\&B in Lagos and Detroit.
+
+\begin{figure}[tbp]\centering\includegraphics[width=\textwidth]{f_genres.png}
+\caption{Share of each genre's acts (musicians born and groups formed, with a point) in the city area with most of them. Genres with 20 or more acts in that city.}\label{fig:genres}\end{figure}
+
+{{TABLE_SIG}}
+
+\subsection{Countries and bands per head}
+The United States is the birth country of {{countries.top.0.n|int}} musicians ({{countries.us_pct|pc}}), then Germany ({{countries.top.1.n|int}}), the United Kingdom, Italy, France, Japan and the Czech Republic (Figure~\ref{fig:countries}). Among notable musicians the United States accounts for {{countries.us_notable_pct|pc}} and the United Kingdom is second. Per head the Czech Republic ({{countries.cze.per_m|int}} per million), Austria and Estonia stand out, which is in large part a sign of systematic import of national library records. For bands, the Nordic countries lead per head (Figure~\ref{fig:metal}): Finland has {{countries.fin.b_per_m|f1}} bands in Wikidata per million people, Norway {{countries.nor.b_per_m|f1}} and Sweden {{countries.swe.b_per_m|f1}}, and for metal bands {{countries.metal_per_m.0.metal_per_m|f1}}, {{countries.metal_per_m.2.metal_per_m|f1}} and {{countries.metal_per_m.1.metal_per_m|f1}}, against {{countries.deu.metal_per_m|f1}} in Germany and {{countries.usa.metal_per_m|f1}} in the United States.
+
+\begin{figure}[tbp]\centering\includegraphics[width=\textwidth]{f_countries.png}
+\caption{Musicians by country of birth: all with a birth country, and notable musicians. Colours: continent.}\label{fig:countries}\end{figure}
+
+\begin{figure}[tbp]\centering\includegraphics[width=\textwidth]{f_metal.png}
+\caption{Bands and metal bands per million present-day population, countries of a million or more with 100+ bands (30+ metal bands).}\label{fig:metal}\end{figure}
+
+\subsection{The shift by decade of birth}
+Figure~\ref{fig:shift} shows musicians' continents of birth by decade. Of those born before 1900, {{decades.europe_early_pct|f1}}\% were born in Europe and {{decades.asia_early_pct|f1}}\% in Asia; of those born since 1970, {{decades.europe_late_pct|f1}}\% and {{decades.asia_late_pct|f1}}\%. Germany falls from {{decades.deu.early_pct|f1}}\% to {{decades.deu.late_pct|f1}}\%, Italy from {{decades.ita.early_pct|f1}}\% to {{decades.ita.late_pct|f1}}\%, while the United States rises from {{decades.usa.early_pct|f1}}\% to {{decades.usa.late_pct|f1}}\%, Japan from {{decades.jpn.early_pct|f1}}\% to {{decades.jpn.late_pct|f1}}\% and South Korea from almost nothing to {{decades.kor.late_pct|f1}}\% (Figure~\ref{fig:rise}). Groups are young: {{decades.b_since1960_pct|pc}} of those with a known start were formed in 1960 or later, most in the {{decades.b_peak|raw}}s.
+
+\begin{figure}[tbp]\centering\includegraphics[width=\textwidth]{f_shift.png}
+\caption{Continent of birth of musicians, by decade of birth (before 1800 pooled).}\label{fig:shift}\end{figure}
+
+\begin{figure}[tbp]\centering\includegraphics[width=\textwidth]{f_rise.png}
+\caption{Share of each decade's musicians born in selected countries.}\label{fig:rise}\end{figure}
+
+\subsection{Women}
+Women are {{women.pct|f1}}\% of musicians with a recorded gender and {{women.notable_pct|f1}}\% of notable ones. By decade of birth (Figure~\ref{fig:women}, Table~\ref{tab:women}) the share rises from {{women.by.1700.pct|f1}}\% before 1800 to about a fifth through the nineteenth century, stays near a fifth for musicians born between 1900 and the 1950s, and then rises to {{women.by.1970.pct|f1}}\% for the 1970s, {{women.by.1980.pct|f1}}\% for the 1980s and {{women.by.1990.pct|f1}}\% for the 1990s. The kind of musician matters more than the decade: women are {{families.by.singer.w_pct|f1}}\% of singers, {{families.by.songwriter.w_pct|f1}}\% of songwriters, {{families.by.instr.w_pct|f1}}\% of instrumentalists, {{families.by.composer.w_pct|f1}}\% of composers, {{families.by.rap.w_pct|f1}}\% of rappers, {{families.by.dj.w_pct|f1}}\% of DJs and producers and {{families.by.conductor.w_pct|f1}}\% of conductors. Among genre families, East Asian pop has a majority of women ({{women.by_genre.0.pct|f1}}\%) and metal the smallest share ({{women.by_genre.12.pct|f1}}\%). By birth country, the highest shares are for musicians born in Indonesia, China, South Korea and Japan, all above 40\%, and among the lowest for Germany, the Czech Republic and Italy, where catalogues of classical musicians weigh heavily.
+
+\begin{figure}[tbp]\centering\includegraphics[width=\textwidth]{f_women.png}
+\caption{Women's share of musicians by decade of birth, for all and notable musicians, and by kind of musician.}\label{fig:women}\end{figure}
+
+{{TABLE_WOMEN}}
+
+\subsection{Coverage}
+Birthplace coverage is the main limitation (Figure~\ref{fig:cov}). Notable musicians almost always have a birth country ({{source.notable_bp_pct|f1}}\%); the {{source.sl1_pct|pc}} of musicians with at most one sitelink only {{source.sl1_bp_pct|pc}}. Musicians with no date of birth have a birth country only {{coverage.no_dob_iso_pct|f1}}\% of the time. For groups, a formation place with coordinates is recorded for {{source.g_pt_pct|f1}}\% overall, {{coverage.by_sl.0.g_pt_pct|f1}}\% of those with at most one sitelink and {{source.g_notable_pt_pct|f1}}\% of notable ones. Coverage by kind of musician is more even: among the named kinds it ranges from {{coverage.by_fam.4.iso_pct|f1}}\% of DJs and producers to {{coverage.by_fam.5.iso_pct|f1}}\% of conductors.
+
+\begin{figure}[tbp]\centering\includegraphics[width=\textwidth]{f_coverage.png}
+\caption{Share of musicians with a birth country, and of groups with a formation place on the map, by number of sitelinks.}\label{fig:cov}\end{figure}
+
+\section{Discussion}
+The open record reproduces several familiar features of music history: the central European heartland of art music, with Vienna, Paris, Prague and Berlin; the Anglo-American centre of popular music in London, New York and Los Angeles; the rise of Japanese and Korean popular music; and the strong identity of scenes such as Nashville, Kingston, Rio de Janeiro, Buenos Aires, Seattle and Oslo, which the location quotient picks out with no prior knowledge. It also makes visible things that national histories rarely show side by side, such as how much more European conductors are than rappers, or how much more Nordic the band map is than the map of musicians.
+
+Every one of these findings is shaped by coverage. A country's number of musicians in Wikidata depends on whether its national library or music databases have been imported, and whether the import included birthplaces; Tallinn's, Prague's and Brno's high per-head rates are in large part facts about the record. Bands have formation places much less often than musicians have birthplaces, and genre tags are present for a minority of musicians. The safest comparisons are relative ones within the data, such as women's share by kind of musician, or a city's share of a genre's acts.
+
+\section{Limitations}
+First, Wikidata is incomplete and uneven: {{source.iso_pct|pc}} of musicians have a birth country and {{source.g_loc_pct|pc}} of groups a formation place. Second, the population is defined by Wikidata's occupation classes, which are generous: the most linked `musicians' include Leonardo da Vinci, Goethe, Martin Luther and Nietzsche, who did play or compose. Third, birth countries use present-day borders. Fourth, families of occupations and genres come from rules on English labels; a few assignments are debatable, and the lists are published so readers can regroup them. Fifth, gender is as recorded, mostly binary, and missing for {{women.u_pct|pc}} of musicians. Sixth, city areas use a fixed 25 km radius and present-day populations. Finally, all counts are for one retrieval in {{meta.retrieved}}.
+
+\section{Conclusion}
+A few open queries are enough to map where nearly half a million musicians were born and where tens of thousands of bands formed, to show how that geography moved from central Europe towards North America and East Asia, to find the home towns of genres, and to measure how unevenly women appear across kinds of musician. The same data show clearly where the record is thin. The atlas lets readers explore both.
+
+\section*{Data and code availability}
+The interactive atlas is at \url{{{meta.page}}}. Data and code are at \url{{{meta.repo}}} and archived with this paper at DOIPLACEHOLDER. Derived data are released under CC BY 4.0 and code under the MIT licence.
+
+\section*{AI statement}
+I wrote the text, with drafting and editing assistance from Claude (Anthropic), which also helped prepare the analysis code. I reviewed and checked all text and results.
+
+\begin{thebibliography}{9}
+\bibitem[Bast and Buchhold(2017)]{qlever} Bast, H. and Buchhold, B. (2017) QLever: a query engine for efficient SPARQL+text search. \emph{Proceedings of the 2017 ACM Conference on Information and Knowledge Management}, 647 to 656.
+\bibitem[Bennett and Peterson(2004)]{bennett} Bennett, A. and Peterson, R. A. (eds.) (2004) \emph{Music Scenes: Local, Translocal and Virtual}. Nashville: Vanderbilt University Press.
+\bibitem[Carney(1974)]{carney} Carney, G. O. (1974) Bluegrass grows all around: the spatial dimensions of a country music style. \emph{Journal of Geography}, 73(4), 34 to 55.
+\bibitem[Connell and Gibson(2003)]{connell} Connell, J. and Gibson, C. (2003) \emph{Sound Tracks: Popular Music, Identity and Place}. London: Routledge.
+\bibitem[Natural Earth(2026)]{naturalearth} Natural Earth (2026) Admin 0 countries, land and populated places. Public domain. \url{https://www.naturalearthdata.com/}
+\bibitem[Schich et al.(2014)]{schich} Schich, M., Song, C., Ahn, Y.-Y., Mirsky, A., Martino, M., Barab\'asi, A.-L. and Helbing, D. (2014) A network framework of cultural history. \emph{Science}, 345(6196), 558 to 562.
+\bibitem[Vrandečić and Krötzsch(2014)]{wikidata} Vrandečić, D. and Krötzsch, M. (2014) Wikidata: a free collaborative knowledgebase. \emph{Communications of the ACM}, 57(10), 78 to 85.
+\bibitem[Wagner et al.(2016)]{wagner} Wagner, C., Graells-Garrido, E., Garcia, D. and Menczer, F. (2016) Women through the glass ceiling: gender asymmetries in Wikipedia. \emph{EPJ Data Science}, 5, 5.
+\end{thebibliography}
+\end{document}

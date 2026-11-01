@@ -1,0 +1,843 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Where Music Comes From</title>
+<meta name="description" content="A world map of where {{source.n_pt|int}} musicians in Wikidata were born and where {{source.g_pt|int}} bands were formed: cities, genres and their home towns, decades, women's share and the gaps in the record.">
+<meta property="og:title" content="Where the world's music comes from: {{source.n_acts_pt|int}} birthplaces and home towns on one map">
+<meta property="og:description" content="{{source.n|int}} musicians and {{source.g_n|int}} bands in Wikidata: New York, London, Paris and Vienna lead, Nashville is country's home town, Kingston reggae's, Seoul K-pop's, and Finland has the most metal bands per head.">
+<meta property="og:image" content="https://maps.tristanhotham.com/music-birthplaces/header.png">
+<meta property="og:url" content="https://maps.tristanhotham.com/music-birthplaces/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,800;9..144,900&family=IBM+Plex+Mono:wght@400;500&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+/* Concert hall: score paper, vermilion, brass, night blue. Data colours are set in the script. */
+:root{
+  --bg:#F7F3EC; --panel:#ECE6DA; --fg:#1D1B22; --muted:#67626C; --rule:#E2DBCD; --card:#FFFCF6; --border:#CFC5B3;
+  --hot:#B5342B; --cool:#2F5D8C; --gold:#C8962B; --plum:#6B2D6F; --land:#EAE4D7; --sea:#F2EEE6;
+  --display:"Fraunces",Georgia,"Times New Roman",serif;
+  --body:"Source Serif 4",Georgia,"Times New Roman",serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#16141A; --panel:#211E26; --fg:#EEE9E3; --muted:#A8A0AC; --rule:#36313C; --card:#1C1A21; --border:#4A4450;
+  --hot:#E36A78; --cool:#86A8D8; --gold:#F2C14E; --plum:#C08AC4; --land:#28252E; --sea:#1A181E; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#16141A; --panel:#211E26; --fg:#EEE9E3; --muted:#A8A0AC; --rule:#36313C; --card:#1C1A21; --border:#4A4450;
+  --hot:#E36A78; --cool:#86A8D8; --gold:#F2C14E; --plum:#C08AC4; --land:#28252E; --sea:#1A181E; color-scheme:dark}
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font:400 18px/1.62 var(--body);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));overflow-x:hidden}
+.wrap{max-width:700px;margin:0 auto;padding-block:28px 64px}
+.wrap .bleed{width:min(1180px,calc(100vw - 32px));margin-left:calc((100% - min(1180px,100vw - 32px))/2);margin-right:0}
+a{color:inherit;text-decoration-color:var(--hot);text-underline-offset:3px}
+.kicker{font:500 12px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.kicker b{background:var(--hot);color:#fff;padding:5px 8px;font-weight:500}
+header.hero{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px 24px;align-items:end;border-bottom:6px double var(--fg);padding-bottom:22px;margin-top:18px}
+h1{font:900 clamp(44px,11vw,94px)/.9 var(--display);letter-spacing:-.02em;margin:0;text-wrap:balance}
+h1 .a{color:var(--hot)} h1 .b{color:var(--gold)}
+.mark{width:clamp(78px,16vw,128px);height:auto;display:block;color:var(--fg)}
+.dek{grid-column:1/-1;font-size:21px;line-height:1.42;margin:8px 0 0;max-width:56ch}
+.byline{font:400 13px/1.4 var(--mono);color:var(--muted);margin-top:14px}
+h2{font:800 34px/1.04 var(--display);letter-spacing:-.01em;margin:54px 0 10px;text-wrap:balance}
+h2 .n{font:500 13px/1 var(--mono);color:var(--hot);display:block;letter-spacing:.1em;margin-bottom:10px}
+h3{font:600 20px/1.25 var(--display);margin:28px 0 6px}
+p{margin:0 0 16px}
+.lede::first-letter{font:900 72px/.8 var(--display);float:left;margin:6px 10px 0 0;color:var(--hot)}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:var(--rule);border:1px solid var(--rule);margin:26px 0 8px}
+.stats div{background:var(--card);padding:14px 12px}
+.stats b{display:block;font:900 clamp(22px,4.4vw,32px)/1 var(--display);letter-spacing:-.01em}
+.stats b.h{color:var(--hot)} .stats b.c{color:var(--cool)} .stats b.g{color:var(--gold)} .stats b.p{color:var(--plum)}
+.stats span{font:400 12px/1.35 var(--mono);color:var(--muted);display:block;margin-top:6px}
+@media (max-width:600px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.figure{margin:26px 0 30px}
+.fig-h{font:600 19px/1.25 var(--display);margin:0 0 4px}
+.fig-sub{font:400 13px/1.45 var(--mono);color:var(--muted);margin:0 0 12px}
+.src{font:400 12px/1.45 var(--mono);color:var(--muted);margin-top:10px}
+.chart{width:100%;position:relative}
+.chart svg{display:block;width:100%;height:auto;overflow:visible}
+svg text{font-family:var(--mono);fill:var(--fg)}
+.lab{font-size:12px}.lab.m{fill:var(--muted)}.lab.b{font-weight:500}.lab.s{font-size:11px}
+.tip{position:absolute;pointer-events:none;background:var(--fg);color:var(--bg);font:400 12px/1.45 var(--mono);padding:8px 10px;border-radius:3px;max-width:290px;z-index:100001;transform:translate(-50%,calc(-100% - 12px));display:none}
+.tip b{font-weight:500}
+.controls{display:flex;gap:8px;align-items:center;margin:0 0 10px;flex-wrap:wrap}
+.scrollrow{display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin;padding-bottom:2px;max-width:100%}
+.scrollrow .btn{flex:0 0 auto;white-space:nowrap}
+.ctl-l{font:500 11px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-right:2px;flex:0 0 auto;align-self:center}
+.btn{font:500 12px/1 var(--mono);background:var(--card);color:var(--fg);border:1px solid var(--border);border-radius:3px;padding:8px 10px;cursor:pointer;min-height:36px}
+.btn[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.btn:focus-visible,input:focus-visible,summary:focus-visible,select:focus-visible{outline:2px solid var(--hot);outline-offset:2px}
+.searchbox{position:relative;flex:1 1 260px;min-width:0}
+input[type=search]{font:400 15px/1 var(--mono);background:var(--card);color:var(--fg);border:1px solid var(--border);border-radius:3px;padding:10px 11px;min-height:40px;width:100%}
+.suggest{position:absolute;left:0;right:0;top:100%;margin:2px 0 0;padding:0;list-style:none;background:var(--card);border:1px solid var(--border);z-index:1001;font:400 13px/1.3 var(--mono);display:none;max-height:340px;overflow:auto}
+.suggest li{padding:8px 10px;cursor:pointer;border-bottom:1px solid var(--rule)}
+.suggest li span{color:var(--muted)}
+.suggest li[aria-selected="true"],.suggest li:hover{background:var(--panel)}
+.timebar{display:grid;grid-template-columns:auto auto minmax(0,1fr) auto;gap:12px;align-items:center;margin:0 0 8px}
+.play{width:46px;height:46px;border-radius:50%;border:0;background:var(--hot);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
+.play svg{width:20px;height:20px}
+.yr{font:900 40px/1 var(--display);letter-spacing:-.02em;min-width:4.2ch;font-variant-numeric:tabular-nums}
+.yr small{display:block;font:400 11px/1.2 var(--mono);color:var(--muted);letter-spacing:.04em}
+input[type=range].slider{width:100%;accent-color:var(--hot);min-height:32px}
+.spark{height:58px;margin:0 0 10px;cursor:pointer}
+@media (max-width:600px){.yr{font-size:30px}.timebar{gap:8px;grid-template-columns:auto 1fr auto}.timebar .slider{grid-column:1/-1;order:5}}
+.mapgrid{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:14px;align-items:start}
+@media (max-width:900px){.mapgrid{grid-template-columns:1fr}}
+.side{background:var(--card);border:1px solid var(--border);padding:12px 12px 10px;font:400 13px/1.45 var(--mono);max-height:640px;overflow:auto}
+@media (max-width:900px){.side{max-height:none}}
+.side h4{font:500 11px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:14px 0 8px}
+.side h4:first-child{margin-top:2px}
+.side .big{font:800 26px/1.1 var(--display);margin:2px 0 4px}
+.side .sub{color:var(--muted);font-size:12px;margin:0 0 8px}
+.side ol,.side ul{margin:4px 0 8px;padding-left:20px}
+.side li{margin:3px 0}
+.side li small,.side td small{color:var(--muted)}
+.side table{width:100%;border-collapse:collapse;margin:4px 0 6px}
+.side td{padding:4px 4px 4px 0;border-bottom:1px solid var(--rule);vertical-align:top}
+.side td.num{text-align:right;white-space:nowrap}
+.back{font:400 12px var(--mono);background:none;border:0;color:var(--muted);padding:0;cursor:pointer;text-decoration:underline;margin-bottom:6px}
+.go{cursor:pointer;text-decoration:underline;text-decoration-color:var(--border);text-underline-offset:3px}
+.lmap{height:600px;border:1px solid var(--border);background:var(--sea);border-radius:2px}
+@media (max-width:600px){.lmap{height:min(62vh,460px)}}
+.leaflet-container{font:400 12px/1.4 var(--mono);background:var(--sea)}
+.dotcanvas{position:absolute;left:0;top:0;pointer-events:none}
+.lyrBtn{background:var(--card,var(--bg));color:var(--fg);border:1px solid var(--border);border-radius:3px;font:600 12px/1 var(--mono);padding:8px 10px;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.12)}
+.lyrBtn[aria-expanded="true"]{background:var(--fg);color:var(--bg)}
+.lyrPanel{background:var(--card,var(--bg));color:var(--fg);border:1px solid var(--border);border-radius:3px;padding:10px 12px 8px;margin-top:6px;width:250px;box-shadow:0 2px 10px rgba(0,0,0,.15);font:400 12px/1.3 var(--mono);max-height:min(70vh,520px);overflow:auto}
+.lyrPanel[hidden]{display:none}
+.lyrPanel .row{margin:0 0 9px}
+.lyrPanel label{display:flex;gap:6px;align-items:center;cursor:pointer;font-weight:600}
+.lyrPanel input[type=range]{width:100%;accent-color:var(--fg)}
+.lyrPanel select{font:400 12px var(--mono);background:var(--bg);color:var(--fg);border:1px solid var(--border);border-radius:2px;padding:2px 4px;width:100%;min-height:0}
+.lyrPanel .sub{display:flex;gap:6px;align-items:center;color:var(--muted);font-size:11px;margin-top:3px}
+.lyrPanel .sub span{flex:0 0 58px}
+.lyrPanel .hd{font:500 10.5px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:10px 0 7px;border-top:1px solid var(--rule);padding-top:9px}
+.lyrPanel .reset{font:400 11px var(--mono);color:var(--muted);background:none;border:0;padding:0;cursor:pointer;text-decoration:underline}
+.cityL{font:500 11px/1 var(--mono);color:var(--fg);white-space:nowrap;text-shadow:0 0 3px var(--bg),0 0 3px var(--bg),0 0 2px var(--bg);pointer-events:none}
+.cityL i{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--fg);margin-right:4px;vertical-align:1px}
+.cityL.s{font-size:10px;font-weight:400}
+.cntL{font:700 11px/1 var(--mono);color:var(--fg);white-space:nowrap;text-transform:uppercase;letter-spacing:.06em;opacity:.75;text-shadow:0 0 3px var(--bg),0 0 3px var(--bg);pointer-events:none;text-align:center}
+.mapnote{background:color-mix(in srgb,var(--card) 92%,transparent);border:1px solid var(--border);border-radius:3px;padding:6px 9px;font:400 12px/1.35 var(--mono);max-width:min(300px,62vw);box-shadow:0 1px 4px rgba(0,0,0,.12)}
+.mapnote b{font-weight:600}
+.mapnote:empty{display:none}
+.leaflet-bar a,.leaflet-bar a:hover{background:var(--card);color:var(--fg);border-bottom-color:var(--border)}
+.leaflet-control-attribution{background:color-mix(in srgb,var(--card) 85%,transparent)!important;color:var(--muted)}
+.leaflet-control-attribution a{color:var(--fg)}
+.leaflet-popup-content-wrapper,.leaflet-popup-tip{background:var(--card);color:var(--fg)}
+.leaflet-popup-content{font:400 12.5px/1.45 var(--mono);margin:10px 12px}
+.leaflet-popup-content b{font:700 15px/1.2 var(--display)}
+.legend{display:flex;gap:6px 14px;flex-wrap:wrap;font:400 12px/1.3 var(--mono);color:var(--muted);margin-top:8px;align-items:center}
+.legend span{display:inline-flex;align-items:center}
+.legend i{display:inline-block;width:13px;height:13px;margin-right:6px;border-radius:2px;border:1px solid rgba(0,0,0,.15)}
+.legend i.c{border-radius:50%}
+.legend i.hx{clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);border:0;width:14px;height:15px;margin-right:0}
+.legend .ln{display:inline-block;width:22px;height:0;border-top:3px solid;margin-right:6px}
+.pull{font:600 26px/1.25 var(--display);border-left:6px solid var(--hot);padding:4px 0 4px 18px;margin:30px 0}
+.note{background:var(--panel);border:1px solid var(--rule);padding:14px 16px;font-size:16px;margin:22px 0}
+.note h3{margin-top:0}
+table.tbl{width:100%;border-collapse:collapse;font:400 13px/1.4 var(--mono)}
+table.tbl th{font:500 11px/1 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);text-align:left;padding:6px 6px 6px 0;border-bottom:2px solid var(--fg)}
+table.tbl th.num,table.tbl td.num{text-align:right}
+table.tbl td{padding:6px 6px 6px 0;border-bottom:1px solid var(--rule);vertical-align:top}
+table.tbl tr.click{cursor:pointer}
+table.tbl tr.click:hover td{background:var(--panel)}
+.tablebox{max-height:430px;overflow:auto;border:1px solid var(--border);background:var(--card);padding:0 10px}
+details{margin:14px 0}
+summary{font:500 13px/1.4 var(--mono);cursor:pointer;color:var(--fg);padding:8px 0}
+.cta{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0}
+.cta a,.cta button{font:500 13px/1 var(--mono);text-decoration:none;border:1px solid var(--fg);padding:11px 14px;border-radius:3px;background:none;color:var(--fg);cursor:pointer}
+.cta a.p{background:var(--hot);border-color:var(--hot);color:#fff}
+footer{border-top:6px double var(--fg);margin-top:56px;padding-top:16px;font:400 13px/1.55 var(--mono);color:var(--muted)}
+footer p{margin:0 0 10px}
+.theme{position:fixed;right:12px;bottom:12px;z-index:1002}
+@media print{.theme,.controls{display:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="kicker"><b>Data study</b><span>Music</span><span>World, from the Baroque to today</span></div>
+<header class="hero">
+  <h1>Where the world's <span class="a">music</span> comes <span class="b">from</span></h1>
+  <svg class="mark" viewBox="0 0 120 120" aria-hidden="true"><g id="heroMark"></g></svg>
+  <p class="dek">Wikidata, the open database behind Wikipedia, knows {{source.n|int}} musicians, singers, composers, rappers and DJs, and {{source.g_n|int}} bands, choirs and orchestras. This is where they were born and where the bands began: Vienna's composers and Nashville's country singers, Kingston's reggae, Seoul's K-pop and the black metal of Oslo and Bergen, decade by decade.</p>
+</header>
+<div class="byline">Dr Tristan Hotham · Independent researcher · 2026 · Data: Wikidata; Natural Earth</div>
+
+<div class="stats">
+  <div><b class="h">{{source.n_pt|int}}</b><span>musicians on the map, born in {{source.n_countries|int}} present-day countries</span></div>
+  <div><b class="g">{{areas.new_york.n|int}}</b><span>born in and around New York, the most of any city; among cities of a million or more, Prague and Vienna have the most per head</span></div>
+  <div><b class="c">{{signature.by.K-pop.pct|pc}}</b><span>of K-pop acts on the map are from Seoul; {{signature.by.reggae.pct|pc}} of reggae acts from Kingston</span></div>
+  <div><b class="p">{{countries.metal_per_m.0.metal_per_m|f1}}</b><span>metal bands per million people in Finland, the most of any country</span></div>
+</div>
+
+<p class="lede">Every musician was born somewhere, and every band started somewhere. Put {{source.n_acts_pt|int}} of those places on one map and the history of music appears in the shape of the world: the courts and conservatories of central Europe, the port cities of the Atlantic, the American South, Kingston, Rio, Tokyo and Seoul. Some music is everywhere. Some, like country, reggae, tango or K-pop, has a home town.</p>
+<p>It is also a map of who has been written down. Wikidata knows where {{source.notable_bp_pct|f1}}% of famous musicians were born, but only {{source.sl1_bp_pct|pc}} of those with one Wikipedia article or none, and it knows where just {{source.g_pt_pct|pc}} of its bands were formed. So read it as the open record of music, not a census. Switch between musicians and bands, choose a kind of musician or a family of genres, drag the decade slider (decade of birth, or of formation for bands), and click a hexagon for the people and bands from there, best known first.</p>
+
+<h2><span class="n">01 · The map</span>{{source.n_acts_pt|int}} birthplaces and home towns</h2>
+<div class="bleed" id="atlas">
+<div class="timebar">
+  <button class="play" id="play" aria-label="Play through the decades"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4l13 8-13 8z"/></svg></button>
+  <div class="yr" id="yr">All<small id="yrsub">decades</small></div>
+  <input type="range" class="slider" id="slider" min="0" max="24" step="1" value="24" aria-label="Decade of birth or formation">
+  <button class="btn" id="allBtn" aria-pressed="true">All decades</button>
+</div>
+<div class="spark" id="spark" title="Musicians by decade of birth, or bands by decade of formation: click to choose a decade"></div>
+<div class="controls">
+  <div class="scrollrow" id="kRow"><span class="ctl-l">Show</span><button class="btn" data-k="0" aria-pressed="true">Musicians</button><button class="btn" data-k="1" aria-pressed="false">Bands and groups</button></div>
+  <div class="scrollrow" id="gRow"><span class="ctl-l">Who</span><button class="btn" data-g="all" aria-pressed="true">Everyone</button><button class="btn" data-g="w" aria-pressed="false">Women</button><button class="btn" data-g="m" aria-pressed="false">Men</button></div>
+  <div class="scrollrow" id="nRow"><span class="ctl-l">Fame</span><button class="btn" data-n="0" aria-pressed="true">All</button><button class="btn" data-n="1" aria-pressed="false">Notable ({{meta.notable|int}}+ sitelinks)</button></div>
+</div>
+<div class="controls"><div class="scrollrow" id="fRow"></div></div>
+<div class="controls"><div class="scrollrow" id="genRow"></div></div>
+<div class="controls">
+  <div class="searchbox"><input type="search" id="q" placeholder="Search a musician, a band, a town or a country" aria-label="Search a musician, a band, a town or a country" autocomplete="off"><ul class="suggest" id="sug" role="listbox"></ul></div>
+</div>
+<div class="controls"><div class="scrollrow" id="focusRow"><span class="ctl-l">Zoom to</span></div></div>
+<div class="mapgrid">
+  <div><div id="map" class="lmap" role="application" aria-label="Map of musicians' birthplaces and where bands formed"></div>
+    <div class="legend" id="legend"></div></div>
+  <div class="side" id="side" aria-live="polite"></div>
+</div>
+<p class="src">Hexagons: musicians born, or bands formed, inside each hexagon, under the filters above; zoom in for single places (circles). Decade: decade of birth for musicians, of formation for bands. Kinds of musician come from Wikidata occupations, genres from Wikidata genres, each grouped into a few families (lists in the data folder); one person can be in several. People and bands whose place has no coordinates are not on the map but count in the charts. Source: Wikidata (CC0). Outlines and city names: Natural Earth. Base map tiles © Esri.</p>
+</div>
+
+<h2><span class="n">02 · Cities</span>New York, London, Paris and Vienna</h2>
+<p>Group every birthplace within 25 km of a city of 200,000 people or more, so that Brooklyn counts with New York and Hollywood with Los Angeles, and {{areas.top.0.name|raw}} comes first with {{areas.top.0.n|int}} musicians, then {{areas.top.1.name|raw}} ({{areas.top.1.n|int}}), {{areas.top.2.name|raw}} ({{areas.top.2.n|int}}) and {{areas.top.3.name|raw}} ({{areas.top.3.n|int}}). Taken as a single Wikidata place, Vienna is the most common birthplace of all ({{places.top.0.n|int}}). Tokyo ({{areas.tokyo.n|int}}) is the first city outside Europe and the Americas.</p>
+<div class="figure"><p class="fig-h">Musicians born in each city, and bands formed there</p><p class="fig-sub">Places within 25 km of a Natural Earth city of 200,000 or more. Per head: per 100,000 people living there today, cities with {{areas.per_capita_min_n|int}}+ musicians or {{areas.per_capita_b_min_n|int}}+ bands. Hover a bar.</p>
+<div class="controls"><div class="scrollrow" id="cityMode"><button class="btn" data-m="n" aria-pressed="true">Musicians</button><button class="btn" data-m="p" aria-pressed="false">Musicians per 100,000</button><button class="btn" data-m="b" aria-pressed="false">Bands</button><button class="btn" data-m="bp" aria-pressed="false">Bands per 100,000</button></div></div>
+<div class="chart" id="cityChart"></div></div>
+<p>Per head the old capitals of central Europe pull away. Vienna has {{areas.vienna.per100k|f1}} musicians in Wikidata for every 100,000 people who live there now, Prague {{areas.prague.per100k|f1}}, against New York's {{areas.new_york.per100k|f1}} and Tokyo's {{areas.tokyo.per100k|f1}}. The very top of the per-head list, {{areas.per_capita.0.name|raw}} ({{areas.per_capita.0.per100k|f1}}), {{areas.per_capita.1.name|raw}} and {{areas.per_capita.2.name|raw}}, says as much about national libraries as about music: Estonian and Czech catalogues of composers and performers have been copied into Wikidata in bulk.</p>
+<p>Bands are a different map. Los Angeles is where most bands in Wikidata were formed ({{areas.los_angeles.b|int}}), ahead of New York ({{areas.new_york.b|int}}) and London ({{areas.london.b|int}}), then San Francisco and Seattle. Per head, the band towns are Ljubljana, Bergen, Malmö and Oslo, with Liverpool and Nashville not far behind.</p>
+
+<h2><span class="n">03 · Two maps</span>Composers' Europe and the pop and rock world</h2>
+<p>Take composers born before 1900 and {{contrast.comp_europe_pct|pc}} of them were born in Europe, led by Vienna ({{contrast.composers_pre1900.0.n|int}}) and Paris ({{contrast.composers_pre1900.1.n|int}}), then London, Prague, Berlin, Naples and Barcelona. Take pop, rock and metal musicians born since 1940 and Europe's share falls to {{contrast.poprock_europe_pct|pc}}: London ({{contrast.poprock_post1940.0.n|int}}) leads, then New York and Los Angeles, with Tokyo, Stockholm and Jakarta in the top ten.</p>
+<div class="figure"><p class="fig-h">Where each kind of musician was born</p><p class="fig-sub">Share born on each continent, musicians with a birth country, all decades. One person can count in several rows.</p><div class="chart" id="famChart"></div><div class="legend" id="famLegend"></div></div>
+<div class="figure"><p class="fig-h">Composers before 1900, pop and rock since 1940</p><p class="fig-sub">Top city areas for composers born before 1900 ({{contrast.n_composers_pre1900|int}} on the map), and for pop, rock and metal musicians born in 1940 or later ({{contrast.n_poprock_post1940|int}}).</p>
+<div class="controls"><div class="scrollrow" id="conMode"><button class="btn" data-m="c" aria-pressed="true">Composers before 1900</button><button class="btn" data-m="p" aria-pressed="false">Pop and rock since 1940</button><button class="btn" data-m="h" aria-pressed="false">Hip hop, any date</button></div></div>
+<div class="chart" id="conChart"></div></div>
+
+<h2><span class="n">04 · Home towns</span>Music cities, genre by genre</h2>
+<p>Most genres are everywhere, but some have a capital. Of the country music acts on the map, the most were born or formed in Nashville ({{signature.by.country music.n|int}}), and Nashville's share of its own acts that play country is {{genre_cities.country.lq.0.lq|f1}} times the world average. Kingston has {{signature.by.reggae.pct|pc}} of all reggae acts, Seoul {{signature.by.K-pop.pct|pc}} of K-pop, Rio de Janeiro {{signature.by.samba.pct|pc}} of samba, Buenos Aires {{signature.by.tango.pct|pc}} of tango and Lisbon {{signature.by.fado.pct|pc}} of fado. Black metal's capital is Oslo ({{signature.by.black metal.n|int}} acts), with Bergen second ({{signature.by.black metal.second_n|int}}); grunge's is Seattle; grime's is London.</p>
+<div class="figure"><p class="fig-h">The home town of each genre</p><p class="fig-sub">The city area with most acts (musicians born and bands formed) tagged with each genre in Wikidata, and its share of all such acts on the map. Click a row to see the genre's family on the map.</p><div class="tablebox"><table class="tbl" id="sigTable"></table></div></div>
+<p>The location quotient tells a similar story from the other side: how much more common a family of genres is among a city's acts than among all acts. Kingston's acts are {{genre_cities.reggae.lq.0.lq|f1}} times as likely to be in reggae and its relatives as the world's, Nashville's {{genre_cities.country.lq.0.lq|f1}} times as likely to be country, New Orleans's {{genre_cities.jazz.lq.0.lq|f1}} times as likely to be jazz. Detroit stands out for soul and R&B ({{genre_cities.rnb.lq.1.lq|f1}}), Atlanta for hip hop ({{genre_cities.hiphop.lq.0.lq|f1}}).</p>
+<div class="figure"><p class="fig-h">Where each family of genres is most concentrated</p><p class="fig-sub">Location quotient: the family's share of a city's genre-tagged acts divided by its share worldwide. Cities with 25+ acts in the family and 40+ tagged acts. Choose a family.</p>
+<div class="controls"><div class="scrollrow" id="lqRow"></div></div><div class="chart" id="lqChart"></div></div>
+
+<h2><span class="n">05 · Bands</span>Where bands begin</h2>
+<p>Wikidata has {{source.g_n|int}} musical groups. It knows the country of {{source.g_iso_pct|pc}} of them, but the town where they formed for only {{source.g_loc_pct|pc}}, so the band map is thinner than the musicians' map, and it is young: {{decades.b_since1960_pct|pc}} of groups with a known start were formed in 1960 or later, with most in the {{decades.b_peak|raw}}s. The United States accounts for {{countries.us_b_pct|pc}} of bands with a country, against {{countries.us_pct|pc}} of musicians.</p>
+<p>Per head, the Nordic countries are the band countries. Finland has {{countries.fin.b_per_m|f1}} bands in Wikidata per million people, Norway {{countries.nor.b_per_m|f1}} and Sweden {{countries.swe.b_per_m|f1}}. For metal the gap is wider: {{countries.metal_per_m.0.metal_per_m|f1}} metal bands per million in Finland, {{countries.metal_per_m.1.metal_per_m|f1}} in Sweden and {{countries.metal_per_m.2.metal_per_m|f1}} in Norway, against {{countries.deu.metal_per_m|f1}} in Germany and {{countries.usa.metal_per_m|f1}} in the United States. Some of that is real, and some is the work of keen Nordic Wikipedia editors.</p>
+<div class="figure"><p class="fig-h">Bands per million people</p><p class="fig-sub">By the country where the band was formed or comes from, countries of a million people or more with 100+ bands (30+ for metal).</p>
+<div class="controls"><div class="scrollrow" id="bpmMode"><button class="btn" data-m="b" aria-pressed="true">All bands</button><button class="btn" data-m="m" aria-pressed="false">Metal bands</button><button class="btn" data-m="p" aria-pressed="false">Musicians per million</button></div></div>
+<div class="chart" id="bpmChart"></div></div>
+
+<h2><span class="n">06 · The shift</span>From central Europe to everywhere</h2>
+<p>Sort musicians by the decade they were born in and the map moves. Of musicians born before 1900, {{decades.europe_early_pct|pc}} were born in Europe and {{decades.asia_early_pct|f1}}% in Asia. Of those born since 1970, Europe's share is {{decades.europe_late_pct|pc}} and Asia's {{decades.asia_late_pct|pc}}. Germany falls from {{decades.deu.early_pct|f1}}% to {{decades.deu.late_pct|f1}}%, while Japan rises from {{decades.jpn.early_pct|f1}}% to {{decades.jpn.late_pct|f1}}% and South Korea from almost nothing to {{decades.kor.late_pct|f1}}%.</p>
+<div class="figure"><p class="fig-h">Where musicians were born, by decade of birth</p><p class="fig-sub">Share of musicians with a birth country, by continent. Before 1800 pooled; decades after the 2000s left out (too few). Hover for numbers.</p>
+<div class="controls"><div class="scrollrow" id="stackMode"><button class="btn" data-m="m" aria-pressed="true">Musicians, by decade of birth</button><button class="btn" data-m="b" aria-pressed="false">Bands, by decade of formation</button></div></div>
+<div class="chart" id="stackChart"></div><div class="legend" id="contLegend"></div></div>
+<div class="figure"><p class="fig-h">Rising and falling birth countries</p><p class="fig-sub">Share of each decade's musicians born in each country, from the 1800s.</p><div class="chart" id="riseChart"></div><div class="legend" id="riseLegend"></div></div>
+
+<h2><span class="n">07 · Women</span>From {{women.by.1700.pct|f1}}% to {{women.by.1990.pct|pc}}</h2>
+<p>Women are {{women.pct|f1}}% of musicians whose gender Wikidata records. Of those born before 1800 they are {{women.by.1700.pct|f1}}%; through the nineteenth century the share climbs to about a fifth, and it stays there for musicians born between 1900 and the 1950s. Then it rises again: {{women.by.1970.pct|pc}} for musicians born in the 1970s, {{women.by.1980.pct|pc}} in the 1980s and {{women.by.1990.pct|pc}} in the 1990s.</p>
+<div class="figure"><p class="fig-h">Women's share of musicians, by decade of birth</p><p class="fig-sub">Musicians whose gender Wikidata records ({{source.gender_pct|pc}} of all). Notable: {{meta.notable|int}}+ sitelinks. Decades with fewer than 300 musicians left out.</p><div class="chart" id="womenChart"></div><div class="legend" id="womenLegend"></div></div>
+<p>It depends enormously on the kind of musician. Women are {{families.by.singer.w_pct|pc}} of singers, but {{families.by.composer.w_pct|pc}} of composers, {{families.by.rap.w_pct|pc}} of rappers, {{families.by.dj.w_pct|pc}} of DJs and producers and {{families.by.conductor.w_pct|f1}}% of conductors. Among genres, East Asian pop is the only family where women are a majority ({{women.by_genre.0.pct|pc}}); metal is the most male ({{women.by_genre.12.pct|f1}}%).</p>
+<div class="figure"><p class="fig-h">Women's share by kind of musician and by genre</p><p class="fig-sub">All decades. Hover for numbers.</p>
+<div class="controls"><div class="scrollrow" id="wMode"><button class="btn" data-m="f" aria-pressed="true">By kind of musician</button><button class="btn" data-m="g" aria-pressed="false">By family of genres</button></div></div>
+<div class="chart" id="wfChart"></div></div>
+
+<h2><span class="n">08 · Countries</span>The United States, Germany and the Czech Republic</h2>
+<p>The United States is the birth country of {{countries.top.0.n|int}} musicians, {{countries.us_pct|pc}} of everyone with a birth country, then Germany ({{countries.top.1.n|int}}), the United Kingdom ({{countries.top.2.n|int}}), Italy, France and Japan. The Czech Republic ({{countries.cze.n|int}}) is seventh, ahead of Spain and Russia. Among notable musicians the American share more than doubles, to {{countries.us_notable_pct|pc}}, and the United Kingdom is second ({{countries.top_notable.1.pct|pc}}).</p>
+<div class="figure"><p class="fig-h">Musicians by country of birth</p><p class="fig-sub">Present-day borders. Notable: {{meta.notable|int}}+ sitelinks ({{source.n_notable|int}} musicians). Hover a bar for the share of women.</p>
+<div class="controls"><div class="scrollrow" id="ctyMode"><button class="btn" data-m="all" aria-pressed="true">All musicians</button><button class="btn" data-m="nt" aria-pressed="false">Notable only</button></div></div>
+<div class="chart" id="ctyChart"></div></div>
+
+<h2><span class="n">09 · Britain</span>Liverpool, Manchester, Sheffield</h2>
+<p>Among British cities, Liverpool comes first per head for both musicians ({{areas.liverpool.per100k|f1}} per 100,000 people living there now) and bands ({{areas.liverpool.b_per100k|f1}}), ahead of London ({{areas.london.per100k|f1}} and {{areas.london.b_per100k|f1}}). Manchester has formed {{areas.manchester.b|int}} bands to Liverpool's {{areas.liverpool.b|int}}, but from a larger area, and Sheffield, for all its synth-pop, has the lowest rates of the big cities here.</p>
+<div class="figure"><p class="fig-h">British and Irish cities</p><p class="fig-sub">Musicians born and bands formed within 25 km, and per 100,000 present-day residents. Click a row to see it on the map.</p><div class="tablebox"><table class="tbl" id="ukTable"></table></div></div>
+
+<h2><span class="n">10 · The gaps</span>A map of who keeps records</h2>
+<p>Notable musicians almost always have a birthplace in Wikidata ({{source.notable_bp_pct|f1}}%). For the {{source.n_sl1|int}} musicians with one sitelink or none, {{source.sl1_pct|pc}} of all, it is {{source.sl1_bp_pct|pc}}. Bands fare worse: a formation place is recorded for {{source.g_notable_pt_pct|pc}} of notable bands and {{coverage.by_sl.0.g_pt_pct|pc}} of those with one sitelink or none. Many entries came in bulk from library catalogues and music databases, which are richer for some countries (Czech, Estonian, German, Austrian) than for others, and for classical music than for popular music in much of Africa and Asia.</p>
+<div class="figure"><p class="fig-h">How often Wikidata knows where</p><p class="fig-sub">Musicians with a birth country, and bands with a formation place on the map, by number of sitelinks.</p><div class="chart" id="covChart"></div><div class="legend" id="covLegend"></div></div>
+<p class="pull">Wikidata knows where {{areas.vienna.n|int}} musicians from Vienna were born, and where {{signature.by.Afrobeats.of|int}} Afrobeats acts come from.</p>
+
+<h2><span class="n">11 · How I did this</span>Methods and caveats</h2>
+<p><b>Musicians.</b> One query through QLever returned every Wikidata human with an occupation that is musician or any of its subclasses ({{source.n_occ_values|int}} occupations appear, from composer and singer to organist, rapper, kobzar and bertsolari), with their birthplace, its coordinates and country, date of birth, gender and number of sitelinks: {{source.n_rows|int}} rows for {{source.n|int}} people, matching a separate count of the same set. I grouped the occupations into eight families and kept every family a person belongs to: {{source.n_multi_fam|int}} people are in more than one. {{source.n_nolabel|int}} have no English label in the extract and are shown by their Wikidata number.</p>
+<p><b>Bands.</b> A second query returned every musical group, from rock bands and idol groups to choirs and orchestras ({{source.g_ens|int}} of the {{source.g_n|int}} are choirs, orchestras or ensembles, which a filter separates), with its location of formation, start and end dates, country of origin and sitelinks. A band's country is that of its formation place, else its country of origin.</p>
+<p><b>Places.</b> A birth or formation country is the present-day country the point falls in (Natural Earth); for musicians it agrees with the place's Wikidata country {{source.agree_pct|pc}} of the time. City areas group points within 25 km of a Natural Earth city of 200,000 people or more ({{source.in_area_pct|pc}} of musicians' points), and per-head figures divide by that city's present population: a rough guide, since most of these musicians were born when cities were smaller.</p>
+<p><b>Genres.</b> Wikidata gives a genre for {{source.genre_pct|pc}} of musicians and {{source.g_genre_pct|pc}} of bands. I grouped the {{genres.n_genre_values|int}} genres used into thirteen families by rules on their names (the full list is in the data). Genre shares are among tagged acts only.</p>
+<p><b>What this is not.</b> It is not a census of musicians, nor a ranking of musical nations. Coverage is uneven between countries, between genres and between famous and obscure musicians. Occupations are generous: the most linked "musicians" include Leonardo da Vinci, Goethe, Martin Luther and Nietzsche, all of whom played or composed, alongside Michael Jackson, Mozart and Beethoven. Gender is as recorded, mostly as a binary ({{women.o_n|int}} people have another gender recorded), and borders are today's.</p>
+<details><summary>Sources and licences</summary>
+<ul>
+<li>Wikidata, via QLever (https://qlever.cs.uni-freiburg.de/wikidata), retrieved {{meta.retrieved|raw}}. CC0.</li>
+<li>Natural Earth countries, land and populated places, with population estimates (public domain).</li>
+<li>Base map tiles © Esri.</li>
+</ul></details>
+
+<div class="cta"><a class="p" href="https://doi.org/10.5281/zenodo.23850287">Read the paper</a><a href="https://github.com/Tristan-Hotham/music-birthplaces">Data and code</a><a href="https://blog.tristanhotham.com/2026/10/31/music-birthplaces/">Blog post</a></div>
+
+<footer>
+<p>Dr Tristan Hotham, Independent researcher. ORCID <a href="https://orcid.org/0000-0003-4931-9349">0000-0003-4931-9349</a>.</p>
+<p>Cite as: Hotham, T. (2026) Where the world's music comes from: the birthplaces of {{source.n_iso|int}} musicians and the home towns of bands in Wikidata. Zenodo. <a href="https://doi.org/10.5281/zenodo.23850287">https://doi.org/10.5281/zenodo.23850287</a></p>
+<p>Licence: derived data and text CC BY 4.0 (Wikidata is CC0), code MIT.</p>
+<p>I wrote the text, with drafting and editing assistance from Claude (Anthropic), which also helped prepare the analysis code. I reviewed and checked all text and results.</p>
+</footer>
+</div>
+<div class="tip" id="tip"></div>
+<button class="btn theme" id="theme" aria-label="Toggle dark mode">◐</button>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+const R = /*RESULTS*/;
+const SITE = /*SITE*/;
+const WORLD = /*WORLD*/;
+const CITIES = /*CITIES*/;
+const fmt = n => n == null || n === "" ? "n/a" : Math.round(n).toLocaleString("en-GB");
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const tip = document.getElementById("tip");
+function showTip(h, x, y) { tip.innerHTML = h; tip.style.display = "block"; const w = tip.offsetWidth; x = Math.max(w / 2 + 8, Math.min(innerWidth - w / 2 - 8, x)); tip.style.left = x + scrollX + "px"; tip.style.top = y + scrollY + "px"; }
+function hideTip() { tip.style.display = "none"; }
+document.addEventListener("click", hideTip);
+const NS = "http://www.w3.org/2000/svg";
+const el = (t, a, p) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); if (p) p.appendChild(e); return e; };
+const lbl = (svg, x, y, s, cls = "lab", anchor = "start") => { const t = el("text", { x, y, class: cls, "text-anchor": anchor }, svg); t.textContent = s; return t; };
+const redraws = [];
+function resp(box, render) { let last = 0; const go = force => { const w = Math.max(280, Math.round(box.clientWidth)); if (!force && Math.abs(w - last) < 4) return; last = w; box.innerHTML = ""; render(w, w < 560); }; new ResizeObserver(() => go()).observe(box); go(); redraws.push(() => go(true)); }
+const isDark = () => { const r = document.documentElement; return r.dataset.theme ? r.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches; };
+const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const CN = iso => (SITE.cname[iso] || iso || "unknown");
+const small = () => innerWidth < 900;
+const wdlink = (q, t) => `<a href="https://www.wikidata.org/wiki/${esc(q)}" target="_blank" rel="noopener">${esc(t || "Wikidata")}</a>`;
+const NOTABLE = R.meta.notable;
+const DECS = SITE.decs;   // 1700 means before 1800
+const decName = d => d === 1700 ? "before 1800" : d + "s";
+const decShort = d => d === 1700 ? "<1800" : d + "s";
+const GN = ["man", "woman", "another gender", "gender not recorded"];
+const FAMS = SITE.fams, GENS = SITE.gens, BTYPES = SITE.btypes;
+
+/* ---------- colours ---------- */
+const RAMP = ["#F3E3B3", "#E9C46A", "#E09F3E", "#D1603D", "#A8323E", "#6D2047", "#3B1442"];
+const RAMPD = ["#4F4632", "#86702E", "#B8862F", "#DA6A3E", "#EE5C64", "#F590B0", "#FAD4E4"];
+const BINS = [1, 3, 10, 30, 100, 300, 1000];
+const binOf = n => { let k = 0; BINS.forEach((b, i) => { if (n >= b) k = i; }); return k; };
+const ramp = n => (isDark() ? RAMPD : RAMP)[binOf(n)];
+const CONT = [["Europe", "#2F5D8C"], ["North America", "#B5342B"], ["Asia", "#C8962B"], ["South America", "#3E8E5E"], ["Africa", "#7A4E9E"], ["Oceania", "#2A9BA8"]];
+const CC = Object.fromEntries(CONT);
+const WCOL = "#7A3E9D";
+
+/* hero mark: a record whose grooves are the continents' shares of musicians */
+(function () {
+  const g = document.getElementById("heroMark");
+  el("circle", { cx: 60, cy: 60, r: 55, fill: "currentColor" }, g);
+  const bc = R.countries.by_cont, tot = bc.reduce((s, c) => s + c.n, 0); let a0 = -Math.PI / 2;
+  bc.forEach(c => { const a1 = a0 + 2 * Math.PI * c.n / tot, r = 47, ri = 24;
+    const p = (a, rr) => `${(60 + rr * Math.cos(a)).toFixed(2)} ${(60 + rr * Math.sin(a)).toFixed(2)}`;
+    el("path", { d: `M${p(a0, ri)} L${p(a0, r)} A${r} ${r} 0 ${a1 - a0 > Math.PI ? 1 : 0} 1 ${p(a1, r)} L${p(a1, ri)} A${ri} ${ri} 0 ${a1 - a0 > Math.PI ? 1 : 0} 0 ${p(a0, ri)}Z`, fill: CC[c.cont], opacity: .92 }, g); a0 = a1; });
+  [30, 37, 44].forEach(r => el("circle", { cx: 60, cy: 60, r, fill: "none", stroke: "currentColor", "stroke-width": .9, opacity: .55 }, g));
+  el("circle", { cx: 60, cy: 60, r: 11, fill: "var(--bg)" }, g); el("circle", { cx: 60, cy: 60, r: 2.6, fill: "currentColor" }, g);
+})();
+
+/* ---------- map machinery ---------- */
+const ESRI = "https://server.arcgisonline.com/ArcGIS/rest/services/";
+const ESRI_ATT = 'Tiles &copy; Esri, HERE, Garmin, USGS, NGA, &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, and the GIS user community';
+const LYDEF = { base: "plain", hills: true, hillK: 40, labels: false, labelK: 80, names: true, nameLvl: 1, cnames: true, borders: true, hex: true, hexK: 85, dots: true, shade: false, shadeBy: "n" };
+const LY = { ...LYDEF };
+try { Object.assign(LY, JSON.parse(localStorage.getItem("music_layers") || "{}")); } catch (e) {}
+const saveLY = () => { try { localStorage.setItem("music_layers", JSON.stringify(LY)); } catch (e) {} };
+const map = L.map("map", { minZoom: 1, maxZoom: 12, maxBounds: [[-75, -200], [86, 200]], zoomSnap: .5 }).setView([32, 8], small() ? 1 : 2);
+["hills:250", "fill:400", "labels:450", "pts:600", "names:620"].forEach(s => { const [n, z] = s.split(":"); map.createPane(n); map.getPane(n).style.zIndex = z; });
+["hills", "labels", "names", "pts"].forEach(n => map.getPane(n).style.pointerEvents = "none");
+let base = null, hills = null, labels = null; const names = L.layerGroup(), cnames = L.layerGroup();
+function setTiles() {
+  [base, labels, hills].forEach(l => { if (l) map.removeLayer(l); });
+  const t = isDark() ? "Dark" : "Light";
+  const url = LY.base === "relief" ? ESRI + "World_Shaded_Relief/MapServer/tile/{z}/{y}/{x}" : LY.base === "satellite" ? ESRI + "World_Imagery/MapServer/tile/{z}/{y}/{x}" : `${ESRI}Canvas/World_${t}_Gray_Base/MapServer/tile/{z}/{y}/{x}`;
+  base = L.tileLayer(url, { maxZoom: 16, maxNativeZoom: LY.base === "relief" ? 13 : 16, attribution: ESRI_ATT }).addTo(map);
+  hills = L.tileLayer(ESRI + "Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}", { maxZoom: 16, maxNativeZoom: 16, pane: "hills" });
+  labels = L.tileLayer(`${ESRI}Canvas/World_${t}_Gray_Reference/MapServer/tile/{z}/{y}/{x}`, { maxZoom: 16, pane: "labels" });
+  applyLayers();
+}
+function applyLayers() {
+  if (!base) return;
+  if (LY.hills) { hills.addTo(map); hills.setOpacity(Math.min(1, .15 + LY.hillK / 120)); } else map.removeLayer(hills);
+  if (LY.labels) { labels.addTo(map); labels.setOpacity(LY.labelK / 100); } else map.removeLayer(labels);
+  if (LY.names) names.addTo(map); else map.removeLayer(names);
+  if (LY.cnames) cnames.addTo(map); else map.removeLayer(cnames);
+  cLayer.setStyle(cStyle); placeNames(); hexes.draw();
+}
+function placeNames() {
+  names.clearLayers(); cnames.clearLayers();
+  const z = map.getZoom(), bb = map.getBounds().pad(.05); const boxes = [];
+  if (LY.names) {
+    const minPop = [[2, 8e6], [3, 3e6], [4, 1e6], [5, 4e5], [6, 1.5e5], [99, 4e4]].find(([zz]) => z < zz + (LY.nameLvl === 2 ? 1.5 : LY.nameLvl === 0 ? -1 : 0))[1] * (LY.nameLvl === 0 ? 2 : 1);
+    let n = 0;
+    for (const c of CITIES) {
+      if (c.pop < minPop || !bb.contains([c.lat, c.lon])) continue;
+      const pt = map.latLngToContainerPoint([c.lat, c.lon]), big = c.pop >= 5e6;
+      const bx = [pt.x - 4, pt.y - 8, pt.x + 10 + c.name.length * (big ? 6.9 : 6.3), pt.y + 7];
+      if (boxes.some(o => bx[0] < o[2] && bx[2] > o[0] && bx[1] < o[3] && bx[3] > o[1])) continue;
+      boxes.push(bx); L.marker([c.lat, c.lon], { pane: "names", interactive: false, keyboard: false, icon: L.divIcon({ className: "cityL" + (big ? "" : " s"), html: `<i></i>${esc(c.name)}`, iconSize: null, iconAnchor: [3, 6] }) }).addTo(names);
+      if (++n >= 120) break;
+    }
+  }
+  if (LY.cnames && z >= 3 && z < 7) {
+    WORLD.features.forEach(f => { const g = SITE.cpos[f.properties.iso]; if (!g || !bb.contains([g[1], g[0]])) return; const nm = CN(f.properties.iso);
+      if (z < 4 && (g[2] || 0) < 2e7) return; const pt = map.latLngToContainerPoint([g[1], g[0]]), w = nm.length * 7.2;
+      const bx = [pt.x - w / 2, pt.y - 7, pt.x + w / 2, pt.y + 7]; if (boxes.some(o => bx[0] < o[2] && bx[2] > o[0] && bx[1] < o[3] && bx[3] > o[1])) return; boxes.push(bx);
+      L.marker([g[1], g[0]], { pane: "names", interactive: false, keyboard: false, icon: L.divIcon({ className: "cntL", html: esc(nm), iconSize: [w, 14], iconAnchor: [w / 2, 7] }) }).addTo(cnames); });
+  }
+}
+(function layerControl() {
+  const Ctl = L.Control.extend({ options: { position: "topright" }, onAdd() {
+    const d = L.DomUtil.create("div"); L.DomEvent.disableClickPropagation(d); L.DomEvent.disableScrollPropagation(d);
+    d.innerHTML = `<button class="lyrBtn" aria-expanded="false">Map layers</button>
+<div class="lyrPanel" hidden>
+ <div class="row"><label style="font-weight:600">Base map</label><div class="sub"><select data-k="base" aria-label="Base map"><option value="plain">Plain grey</option><option value="relief">Shaded relief</option><option value="satellite">Satellite</option></select></div></div>
+ <div class="row"><label><input type="checkbox" data-k="hills"> Hills and mountains</label><div class="sub"><span>strength</span><input type="range" data-k="hillK" min="10" max="100" step="5" aria-label="Hill shading strength"></div></div>
+ <div class="row"><label><input type="checkbox" data-k="labels"> Map labels</label><div class="sub"><span>strength</span><input type="range" data-k="labelK" min="20" max="100" step="5" aria-label="Map label strength"></div></div>
+ <div class="row"><label><input type="checkbox" data-k="names"> Bold city names</label><div class="sub"><span>how many</span><select data-k="nameLvl" aria-label="How many city names"><option value="0">Biggest only</option><option value="1">Some</option><option value="2">Lots</option></select></div></div>
+ <div class="row"><label><input type="checkbox" data-k="cnames"> Country names</label></div>
+ <div class="row"><label><input type="checkbox" data-k="borders"> Borders</label></div>
+ <div class="hd">Musicians and bands</div>
+ <div class="row"><label><input type="checkbox" data-k="hex"> Hexagons</label><div class="sub"><span>strength</span><input type="range" data-k="hexK" min="20" max="100" step="5" aria-label="Hexagon strength"></div></div>
+ <div class="row"><label><input type="checkbox" data-k="dots"> Single places when zoomed in</label></div>
+ <div class="row"><label><input type="checkbox" data-k="shade"> Countries shaded</label><div class="sub"><span>by</span><select data-k="shadeBy" aria-label="Shade countries by"><option value="n">Number on the map</option><option value="pm">Per million people</option></select></div></div>
+ <button class="reset">Reset layers</button>
+</div>`;
+    return d; } });
+  map.addControl(new Ctl());
+  const box = map.getContainer(), btn = box.querySelector(".lyrBtn"), pan = box.querySelector(".lyrPanel");
+  btn.onclick = () => { const o = pan.hidden; pan.hidden = !o; btn.setAttribute("aria-expanded", o); };
+  const sync = () => pan.querySelectorAll("[data-k]").forEach(i => { const k = i.dataset.k; if (i.type === "checkbox") i.checked = LY[k]; else i.value = LY[k]; });
+  pan.querySelectorAll("[data-k]").forEach(i => i.addEventListener(i.type === "range" ? "input" : "change", () => {
+    const k = i.dataset.k; LY[k] = i.type === "checkbox" ? i.checked : (k === "base" || k === "shadeBy" ? i.value : +i.value);
+    if (k === "hillK") LY.hills = true; if (k === "labelK") LY.labels = true; if (k === "nameLvl") LY.names = true; if (k === "hexK") LY.hex = true; if (k === "shadeBy") LY.shade = true;
+    sync(); saveLY(); if (k === "base") setTiles(); else applyLayers(); legend();
+  }));
+  pan.querySelector(".reset").onclick = () => { Object.assign(LY, LYDEF); saveLY(); sync(); setTiles(); legend(); };
+  window.syncLayers = sync;
+  sync();
+})();
+const Note = L.Control.extend({ options: { position: "bottomleft" }, onAdd() { const d = L.DomUtil.create("div", "mapnote"); d.id = "mapnote"; L.DomEvent.disableClickPropagation(d); return d; } });
+map.addControl(new Note());
+L.control.scale({ imperial: false, position: "bottomright" }).addTo(map);
+
+/* ---------- state and data ----------
+   acts.bin: two little-endian 32-bit words per act (musician with a birthplace point, or band with a formation point),
+   sorted by place then sitelinks. Word a: place index (bits 0 to 17), decade index + 1 (18 to 22, 0 = no date),
+   gender (23 to 24: 0 man, 1 woman, 2 another, 3 unknown or band), band flag (25). Word b: family bits (0 to 7; for
+   bands bit 0 band, bit 1 ensemble), genre family bits (8 to 21), sitelinks capped at 1023 (22 to 31). */
+const S = { dec: null, kind: 0, g: "all", nt: 0, fam: -1, gen: -1, sel: null, place: null, hex: null, act: null, playing: false };
+let W = null, NA = 0, PL = null, PSTART = null, CNT = null;
+const A_pl = k => W[2 * k] & 0x3FFFF, A_dec = k => (W[2 * k] >>> 18) & 31, A_g = k => (W[2 * k] >>> 23) & 3, A_kind = k => (W[2 * k] >>> 25) & 1;
+const A_fam = k => W[2 * k + 1] & 255, A_gen = k => (W[2 * k + 1] >>> 8) & 0x3FFF, A_sl = k => W[2 * k + 1] >>> 22;
+function keep(k) {
+  if (A_kind(k) !== S.kind) return false;
+  if (S.kind === 0 && S.g !== "all" && A_g(k) !== (S.g === "w" ? 1 : 0)) return false;
+  if (S.nt && A_sl(k) < NOTABLE) return false;
+  if (S.dec != null && A_dec(k) !== DECS.indexOf(S.dec) + 1) return false;
+  if (S.fam >= 0 && !(A_fam(k) & (1 << S.fam))) return false;
+  if (S.gen >= 0 && !(A_gen(k) & (1 << S.gen))) return false;
+  return true;
+}
+function recount() { if (!W) return; CNT = new Int32Array(PL.length); for (let k = 0; k < NA; k++) if (keep(k)) CNT[A_pl(k)]++; }
+const kindWord = (n, one) => S.kind ? (n === 1 ? "band" : "bands") : (n === 1 ? (one || "musician") : "musicians");
+function filtLabel() {
+  return [S.kind ? "bands" : "musicians", S.dec == null ? "all decades" : (S.kind ? "formed " : "born ") + decName(S.dec), S.kind === 0 && S.g !== "all" ? (S.g === "w" ? "women" : "men") : "",
+    S.fam >= 0 ? (S.kind ? BTYPES[S.fam][1] : FAMS[S.fam][1]).toLowerCase() : "", S.gen >= 0 ? GENS[S.gen][1] : "", S.nt ? "notable" : ""].filter(Boolean).join(", ");
+}
+
+/* ---------- countries ---------- */
+let CC_N = {};
+function countryCounts() { const c = {}; if (!CNT) return c; for (let i = 0; i < PL.length; i++) if (CNT[i]) { const iso = PL[i][3]; c[iso] = (c[iso] || 0) + CNT[i]; } return c; }
+function cStyle(f) {
+  const iso = f.properties.iso, bd = css("--border") || "#999", sel = iso === S.sel, n = CC_N[iso] || 0, pop = (SITE.cpos[iso] || [])[2] || 0;
+  const v = LY.shadeBy === "pm" ? (pop >= 3e5 ? n / pop * 1e6 : 0) : n / 10;
+  const on = LY.shade && v > 0;
+  return { color: sel ? css("--fg") : bd, weight: LY.borders ? (sel ? 2.4 : .6) : (sel ? 2 : 0), fillColor: on ? ramp(LY.shadeBy === "pm" ? v / 3 : v) : css("--land"), fillOpacity: on ? .5 : .12 };
+}
+const cLayer = L.geoJSON(WORLD, { pane: "fill", style: cStyle, onEachFeature: (f, l) => {
+  l.on("click", e => { L.DomEvent.stopPropagation(e); if (!hitAndPick(e.containerPoint)) pickCountry(f.properties.iso, false); });
+  l.on("mousemove", e => { const h = hitTip(e.containerPoint); map.getContainer().style.cursor = h ? "pointer" : ""; const r = map.getContainer().getBoundingClientRect(); showTip(h || cTip(f.properties.iso), r.left + e.containerPoint.x, r.top + e.containerPoint.y); });
+  l.on("mouseout", hideTip);
+} }).addTo(map);
+map.on("click", e => hitAndPick(e.containerPoint));
+function cTip(iso) { const n = CC_N[iso] || 0, pop = (SITE.cpos[iso] || [])[2]; return `<b>${esc(CN(iso))}</b><br>${fmt(n)} ${kindWord(n)} on the map${pop && n ? ` (${(n / pop * 1e6).toFixed(1)} per million)` : ""}<br><small>${esc(filtLabel())}</small>`; }
+
+/* ---------- hexagons and place circles on one canvas ---------- */
+let Z = -1, XY = null, HX = new Map(), VISP = [];
+const showDots = () => LY.dots && map.getZoom() >= 6;
+const hexR = () => small() ? 11 : 13;
+function hexKey(x, y, s) {
+  const q = (Math.sqrt(3) / 3 * x - y / 3) / s, r = (2 / 3 * y) / s; let rx = Math.round(q), ry = Math.round(-q - r), rz = Math.round(r);
+  const dx = Math.abs(rx - q), dy = Math.abs(ry + q + r), dz = Math.abs(rz - r);
+  if (dx > dy && dx > dz) rx = -ry - rz; else if (dy <= dz) rz = -rx - ry;
+  return [rx, rz];
+}
+const hexCentre = (q, r, s) => [s * Math.sqrt(3) * (q + r / 2), s * 1.5 * r];
+const Hex = L.Layer.extend({
+  onAdd(m) { this._c = L.DomUtil.create("canvas", "dotcanvas"); m.getPane("pts").appendChild(this._c); m.on("moveend zoomend resize viewreset", this._reset, this); m.on("zoomstart", () => this._c.style.opacity = 0); this._reset(); },
+  onRemove(m) { L.DomUtil.remove(this._c); m.off("moveend zoomend resize viewreset", this._reset, this); },
+  _reset() { const s = map.getSize(), d = devicePixelRatio || 1; L.DomUtil.setPosition(this._c, map.containerPointToLayerPoint([0, 0])); this._c.width = s.x * d; this._c.height = s.y * d; this._c.style.width = s.x + "px"; this._c.style.height = s.y + "px"; this._c.style.opacity = 1; this.draw(); },
+  draw() {
+    if (!this._c) return; const ctx = this._c.getContext("2d"), d = devicePixelRatio || 1; ctx.setTransform(d, 0, 0, d, 0, 0); ctx.clearRect(0, 0, this._c.width, this._c.height);
+    HX = new Map(); VISP = [];
+    if (!W || !CNT) return;
+    const z = map.getZoom(); if (z !== Z) { Z = z; XY = new Float32Array(PL.length * 2); PL.forEach((p, i) => { const q = map.project([p[1], p[0]], z); XY[2 * i] = q.x; XY[2 * i + 1] = q.y; }); }
+    const o = map.getPixelOrigin(), off = map.containerPointToLayerPoint([0, 0]), ox = o.x + off.x, oy = o.y + off.y, sz = map.getSize(), s = hexR(), dark = isDark();
+    const dots = showDots();
+    if (LY.hex && !dots) {
+      for (let i = 0; i < PL.length; i++) { const n = CNT[i]; if (!n) continue; const [q, r] = hexKey(XY[2 * i], XY[2 * i + 1], s); const k = q + "," + r; let h = HX.get(k); if (!h) { h = { q, r, n: 0, pl: [] }; HX.set(k, h); } h.n += n; h.pl.push(i); }
+      ctx.globalAlpha = LY.hexK / 100; ctx.lineWidth = .8; ctx.strokeStyle = dark ? "rgba(0,0,0,.35)" : "rgba(255,255,255,.7)";
+      for (const h of HX.values()) {
+        const [cx, cy] = hexCentre(h.q, h.r, s), x = cx - ox, y = cy - oy; if (x < -s || y < -s || x > sz.x + s || y > sz.y + s) continue;
+        ctx.beginPath(); for (let a = 0; a < 6; a++) { const t = Math.PI / 180 * (60 * a - 30); const px = x + (s - .6) * Math.cos(t), py = y + (s - .6) * Math.sin(t); a ? ctx.lineTo(px, py) : ctx.moveTo(px, py); }
+        ctx.closePath(); ctx.fillStyle = ramp(h.n); ctx.fill(); ctx.stroke();
+        if (S.hex === h.q + "," + h.r) { ctx.globalAlpha = 1; ctx.lineWidth = 2.4; ctx.strokeStyle = dark ? "#fff" : "#000"; ctx.stroke(); ctx.globalAlpha = LY.hexK / 100; ctx.lineWidth = .8; ctx.strokeStyle = dark ? "rgba(0,0,0,.35)" : "rgba(255,255,255,.7)"; }
+      }
+      ctx.globalAlpha = 1;
+    }
+    if (dots) {
+      const idx = []; for (let i = 0; i < PL.length; i++) if (CNT[i]) { const x = XY[2 * i] - ox, y = XY[2 * i + 1] - oy; if (x > -20 && y > -20 && x < sz.x + 20 && y < sz.y + 20) idx.push(i); }
+      idx.sort((a, b) => CNT[b] - CNT[a]);
+      ctx.lineWidth = 1; ctx.strokeStyle = dark ? "rgba(0,0,0,.6)" : "rgba(255,255,255,.9)";
+      for (let k = idx.length - 1; k >= 0; k--) { const i = idx[k], n = CNT[i], rr = 3 + 2.2 * Math.sqrt(n); const x = XY[2 * i] - ox, y = XY[2 * i + 1] - oy;
+        ctx.beginPath(); ctx.arc(x, y, rr, 0, 7); ctx.fillStyle = ramp(n); ctx.globalAlpha = .9; ctx.fill(); ctx.globalAlpha = 1; ctx.stroke(); VISP.push([i, x, y, rr]); }
+      if (S.place != null) { const i = S.place, x = XY[2 * i] - ox, y = XY[2 * i + 1] - oy; ctx.beginPath(); ctx.arc(x, y, 6 + 2.2 * Math.sqrt(CNT[i] || 1), 0, 7); ctx.strokeStyle = dark ? "#fff" : "#000"; ctx.lineWidth = 2.2; ctx.stroke(); }
+    }
+  }
+});
+const hexes = new Hex().addTo(map);
+function hexAt(cp) {
+  if (!HX.size) return null; const o = map.getPixelOrigin(), off = map.containerPointToLayerPoint([0, 0]);
+  const [q, r] = hexKey(cp.x + o.x + off.x, cp.y + o.y + off.y, hexR()); return HX.get(q + "," + r) || null;
+}
+function placeAt(cp) { let best = null, bd = 1e9; for (const v of VISP) { const d = Math.hypot(v[1] - cp.x, v[2] - cp.y); if (d <= v[3] + 3 && d < bd) { bd = d; best = v[0]; } } return best; }
+const plName = i => PL[i][2] || `place with no English label (${PL[i][4]})`;
+function hitTip(cp) {
+  if (showDots()) { const i = placeAt(cp); if (i == null) return null; return `<b>${esc(plName(i))}</b><br>${fmt(CNT[i])} ${kindWord(CNT[i])} · ${esc(CN(PL[i][3]))}`; }
+  if (!LY.hex) return null; const h = hexAt(cp); if (!h) return null;
+  const top = h.pl.slice().sort((a, b) => CNT[b] - CNT[a]).slice(0, 3).map(i => esc(plName(i)) + " " + fmt(CNT[i])).join(", ");
+  return `<b>${fmt(h.n)} ${kindWord(h.n)}</b><br>${top}${h.pl.length > 3 ? ", ..." : ""}`;
+}
+function hitAndPick(cp) {
+  if (showDots()) { const i = placeAt(cp); if (i != null) { pickPlace(i, false); return true; } return false; }
+  if (!LY.hex) return false; const h = hexAt(cp); if (!h) return false; pickHex(h); return true;
+}
+
+/* ---------- names, loaded lazily in chunks ---------- */
+const CHUNKS = SITE.chunks, CACHE = new Map();
+const chunkOf = k => { let lo = 0, hi = CHUNKS.length - 1; while (lo < hi) { const m = (lo + hi + 1) >> 1; if (CHUNKS[m][0] <= k) lo = m; else hi = m - 1; } return lo; };
+function loadChunk(c) { if (!CACHE.has(c)) CACHE.set(c, fetch(`data/map/d${String(c).padStart(3, "0")}.json`).then(r => r.json())); return CACHE.get(c); }
+async function details(ks) { const cs = [...new Set(ks.map(chunkOf))]; const got = await Promise.all(cs.map(loadChunk)); const m = new Map(cs.map((c, i) => [c, got[i]]));
+  return ks.map(k => { const c = chunkOf(k), r = m.get(c)[k - CHUNKS[c][0]]; return { k, n: r[0], q: r[1], y: r[2] }; }); }
+function actsAt(pls) { const out = []; for (const i of pls) for (let k = PSTART[i]; k < PSTART[i + 1]; k++) if (keep(k)) out.push(k); return out.sort((a, b) => A_sl(b) - A_sl(a)); }
+const famList = k => A_kind(k) ? BTYPES.filter((f, i) => A_fam(k) & (1 << i)).map(f => f[1]) : FAMS.filter((f, i) => A_fam(k) & (1 << i)).map(f => f[1]);
+const genList = k => GENS.filter((g, i) => A_gen(k) & (1 << i)).map(g => g[1]);
+let SIDE_TOKEN = 0;
+function actList(ks, nmax, box) {
+  const tok = ++SIDE_TOKEN, list = ks.slice(0, nmax), id = "al" + tok;
+  setTimeout(() => details(list).then(ds => { if (tok !== SIDE_TOKEN) return; const e = document.getElementById(id); if (!e) return;
+    e.innerHTML = ds.map(d => `<li><span class="go" data-a="${d.k}">${esc(d.n || d.q)}</span> <small>${d.y ? (A_kind(d.k) ? "formed " : "born ") + d.y : ""}${A_sl(d.k) >= NOTABLE ? " · " + A_sl(d.k) + " sitelinks" : ""}</small></li>`).join("");
+    e.querySelectorAll("[data-a]").forEach(x => x.onclick = () => pickAct(+x.dataset.a, true)); }), 0);
+  return `<ol id="${id}"><li class="sub">loading names...</li></ol>` + (ks.length > nmax ? `<p class="sub">and ${fmt(ks.length - nmax)} more.</p>` : "");
+}
+function sexLine(ks) { if (S.kind) return ""; const g = ks.filter(k => A_g(k) < 3), w = g.filter(k => A_g(k) === 1).length; return g.length ? ` · ${(100 * w / g.length).toFixed(0)}% women (of ${fmt(g.length)} with gender recorded)` : ""; }
+
+/* ---------- time ---------- */
+const decIdx = d => DECS.indexOf(d);
+function setDec(d) {
+  S.dec = d; const sl = document.getElementById("slider"); sl.value = d == null ? DECS.length : decIdx(d);
+  document.getElementById("allBtn").setAttribute("aria-pressed", d == null);
+  document.getElementById("yr").firstChild.nodeValue = d == null ? "All" : decShort(d);
+  update();
+}
+function update() {
+  recount(); CC_N = countryCounts(); let n = 0; if (CNT) for (const v of CNT) n += v;
+  document.getElementById("yrsub").textContent = W ? `${fmt(n)} on the map` : "loading";
+  cLayer.setStyle(cStyle); hexes.draw(); sparkDraw(); side(); legend();
+}
+let timer = null;
+const PLAYFROM = () => S.kind ? DECS.indexOf(1950) : 0;
+function play(on) {
+  S.playing = on; const b = document.getElementById("play");
+  b.innerHTML = on ? '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4h4v16H6zM14 4h4v16h-4z"/></svg>' : '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4l13 8-13 8z"/></svg>';
+  b.setAttribute("aria-label", on ? "Pause" : "Play through the decades"); clearInterval(timer);
+  if (on) { setDec(DECS[PLAYFROM()]); timer = setInterval(() => { const i = decIdx(S.dec); if (i >= DECS.length - (S.kind ? 1 : 3)) { play(false); return; } setDec(DECS[i + 1]); }, 1000); }
+}
+document.getElementById("play").onclick = () => play(!S.playing);
+document.getElementById("slider").addEventListener("input", e => { if (S.playing) play(false); const v = +e.target.value; setDec(v >= DECS.length ? null : DECS[v]); });
+document.getElementById("allBtn").onclick = () => { if (S.playing) play(false); setDec(null); };
+const press = (row, b) => document.querySelectorAll(`#${row} .btn`).forEach(x => x.setAttribute("aria-pressed", x === b));
+document.querySelectorAll("#kRow .btn").forEach(b => b.onclick = () => setKind(+b.dataset.k));
+function setKind(k) { S.kind = k; S.fam = -1; press("kRow", document.querySelector(`#kRow .btn[data-k="${k}"]`)); document.getElementById("gRow").style.display = k ? "none" : ""; famRow(); clearSel(); update(); }
+document.querySelectorAll("#gRow .btn").forEach(b => b.onclick = () => { S.g = b.dataset.g; press("gRow", b); update(); });
+document.querySelectorAll("#nRow .btn").forEach(b => b.onclick = () => { S.nt = +b.dataset.n; press("nRow", b); update(); });
+function famRow() {
+  const row = document.getElementById("fRow"), L_ = S.kind ? BTYPES : FAMS;
+  row.innerHTML = `<span class="ctl-l">${S.kind ? "Type" : "Kind"}</span><button class="btn" data-f="-1" aria-pressed="${S.fam < 0}">All</button>` + L_.map((f, i) => `<button class="btn" data-f="${i}" aria-pressed="${S.fam === i}">${esc(f[1])}</button>`).join("");
+  row.querySelectorAll(".btn").forEach(b => b.onclick = () => { S.fam = +b.dataset.f; press("fRow", b); update(); });
+}
+function setGen(i) { S.gen = i; press("genRow", document.querySelector(`#genRow .btn[data-x="${i}"]`)); update(); }
+(function genRow() {
+  const row = document.getElementById("genRow");
+  row.innerHTML = `<span class="ctl-l">Genre</span><button class="btn" data-x="-1" aria-pressed="true">Any or none</button>` + GENS.map((g, i) => `<button class="btn" data-x="${i}" aria-pressed="false">${esc(g[1])}</button>`).join("");
+  row.querySelectorAll(".btn").forEach(b => b.onclick = () => setGen(+b.dataset.x));
+})();
+famRow();
+
+/* sparkline: musicians by decade of birth, or bands by decade of formation */
+let SPARK = null;
+function sparkDraw() {
+  const box = document.getElementById("spark"); if (!SPARK) { SPARK = true; resp(box, () => sparkDraw()); return; }
+  box.innerHTML = ""; const w = Math.max(280, box.clientWidth), h = 58, svg = el("svg", { viewBox: `0 0 ${w} ${h}`, role: "img", "aria-label": "Counts by decade" }, box);
+  const rows = S.kind ? R.decades.rows_b : R.decades.rows, mx = Math.max(...rows.map(r => r.n_all)), bw = w / rows.length;
+  if (S.dec != null) el("rect", { x: decIdx(S.dec) * bw, y: 0, width: bw, height: h, fill: css("--hot"), opacity: .14 }, svg);
+  rows.forEach((r, i) => { const v = r.n_all, hh = 40 * Math.sqrt(v / mx); el("rect", { x: i * bw + 1.5, y: 44 - hh, width: bw - 3, height: hh, fill: css("--muted"), opacity: .55 }, svg);
+    if (i % (w < 560 ? 4 : 2) === 0) lbl(svg, i * bw + bw / 2, 56, r.dec === 1700 ? "<1800" : (w < 560 ? "'" + String(r.dec).slice(2) : r.dec + "s"), "lab s m", "middle"); });
+  const pick = e => { const rr = svg.getBoundingClientRect(); return Math.min(rows.length - 1, Math.max(0, Math.floor((e.clientX - rr.left) / rr.width * rows.length))); };
+  svg.addEventListener("click", e => { if (S.playing) play(false); setDec(DECS[pick(e)]); });
+  svg.addEventListener("mousemove", e => { const r = rows[pick(e)]; showTip(`<b>${S.kind ? "Formed" : "Born"} ${decName(r.dec)}</b><br>${fmt(r.n_all)} ${S.kind ? "bands" : "musicians"}, ${fmt(r.n)} with a country`, e.clientX, e.clientY); });
+  svg.addEventListener("mouseleave", hideTip);
+}
+
+/* ---------- legend, side panel ---------- */
+function legend() {
+  const e = document.getElementById("legend");
+  let h = `<span>${S.kind ? "Bands formed" : "Musicians born"} ${showDots() ? "at each place" : "in each hexagon"}:</span>` + BINS.map((b, i) => `<span><i class="${showDots() ? "c" : "hx"}" style="background:${(isDark() ? RAMPD : RAMP)[i]}"></i>&nbsp;${fmt(b)}${i < BINS.length - 1 ? " to " + fmt(BINS[i + 1] - 1) : "+"}</span>`).join("");
+  h += `<span>Showing: ${esc(filtLabel())}</span>`;
+  e.innerHTML = h;
+}
+function note(h) { document.getElementById("mapnote").innerHTML = h || ""; }
+function bind(box) {
+  const b = box.querySelector(".back"); if (b) b.onclick = () => { S.act = null; side(); };
+  box.querySelectorAll("[data-c]").forEach(e => e.onclick = () => pickCountry(e.dataset.c, true));
+  box.querySelectorAll("[data-p]").forEach(e => e.onclick = () => pickPlace(+e.dataset.p, true));
+  box.querySelectorAll("[data-a]").forEach(e => e.onclick = () => pickAct(+e.dataset.a, true));
+}
+function side() {
+  const box = document.getElementById("side"); let h = "";
+  if (!W) { box.innerHTML = `<h4>Loading</h4><p class="sub">Loading ${fmt(SITE.n_acts)} places on the map...</p>`; return; }
+  if (S.act != null) {
+    const k = S.act, p = PL[A_pl(k)], b = A_kind(k), di = A_dec(k);
+    h = `<button class="back">Back</button><h4>${b ? "Band or group" : "Musician"}</h4><div class="big" id="actName">...</div><table>
+<tr><td>${b ? "Formed" : "Born"}</td><td><span id="actYear">${di ? decName(DECS[di - 1]) : "date not recorded"}</span>, <span class="go" data-p="${A_pl(k)}">${esc(plName(A_pl(k)))}</span></td></tr><tr><td>Country</td><td><span class="go" data-c="${esc(p[3])}">${esc(CN(p[3]))}</span></td></tr>
+${b ? "" : `<tr><td>Gender</td><td>${GN[A_g(k)]}</td></tr>`}<tr><td>${b ? "Type" : "Kind"}</td><td>${esc(famList(k).join(", ") || "not recorded")}</td></tr><tr><td>Genres</td><td>${esc(genList(k).join(", ") || "none recorded")}</td></tr>
+<tr><td>Sitelinks</td><td>${A_sl(k)}${A_sl(k) >= 1023 ? "+" : ""}</td></tr></table><p id="actLinks"></p>`;
+    details([k]).then(([d]) => { const n = document.getElementById("actName"); if (!n || S.act !== k) return; n.textContent = d.n || d.q; if (d.y) document.getElementById("actYear").textContent = d.y;
+      document.getElementById("actLinks").innerHTML = `${wdlink(d.q, "Wikidata " + d.q)} · ${wdlink(p[4], "place")}`; });
+  } else if (S.place != null) {
+    const p = PL[S.place], ks = actsAt([S.place]);
+    h = `<h4>${S.kind ? "Where bands formed" : "Birthplace"} · ${esc(CN(p[3]))}</h4><div class="big">${esc(plName(S.place))}</div><p class="sub">${fmt(ks.length)} ${kindWord(ks.length)} (${esc(filtLabel())})${sexLine(ks)} · ${wdlink(p[4])}</p>`;
+    h += `<h4>Best known first (by sitelinks)</h4>` + actList(ks, 40);
+    note(`<b>${esc(plName(S.place))}</b>: ${fmt(ks.length)} ${kindWord(ks.length)}`);
+  } else if (S.hex) {
+    const hx = HX.get(S.hex); if (!hx) { S.hex = null; return side(); }
+    const ks = actsAt(hx.pl), pls = hx.pl.slice().sort((a, b) => CNT[b] - CNT[a]);
+    h = `<h4>This hexagon</h4><div class="big">${fmt(ks.length)} ${kindWord(ks.length)}</div><p class="sub">${esc(filtLabel())}${sexLine(ks)}</p><h4>Places</h4><ol>` +
+      pls.slice(0, 10).map(i => `<li><span class="go" data-p="${i}">${esc(plName(i))}</span> <small>${fmt(CNT[i])}</small></li>`).join("") + `</ol>` + (pls.length > 10 ? `<p class="sub">and ${pls.length - 10} more places; zoom in to see them.</p>` : "") +
+      `<h4>Best known first (by sitelinks)</h4>` + actList(ks, 25);
+    note(`<b>${fmt(ks.length)}</b> ${kindWord(ks.length)} in this hexagon`);
+  } else if (S.sel) {
+    const iso = S.sel, c = SITE.c[iso], n = CC_N[iso] || 0;
+    h = `<h4>${esc(SITE.cont[iso] || "Country")}</h4><div class="big">${esc(CN(iso))}</div>`;
+    if (!c) h += `<p class="sub">No musicians or bands from here in the data.</p>`;
+    else {
+      h += `<table><tr><td>On the map now (${esc(filtLabel())})</td><td class="num">${fmt(n)}</td></tr><tr><td>Musicians born here (all, with this birth country)</td><td class="num">${fmt(c.n)}</td></tr><tr><td>per million people today</td><td class="num">${c.pm == null ? "n/a" : c.pm.toFixed(1)}</td></tr><tr><td>Notable musicians (${NOTABLE}+ sitelinks)</td><td class="num">${fmt(c.nn)}</td></tr>
+<tr><td>Women, of musicians with gender recorded</td><td class="num">${c.w == null ? "n/a" : c.w.toFixed(0) + "%"}</td></tr><tr><td>Bands from here</td><td class="num">${fmt(c.b)}</td></tr><tr><td>Bands per million</td><td class="num">${c.bpm == null ? "n/a" : c.bpm.toFixed(1)}</td></tr><tr><td>Metal bands per million</td><td class="num">${c.mpm == null ? "n/a" : c.mpm.toFixed(1)}</td></tr></table>`;
+      h += `<h4>${S.kind ? "Bands by decade of formation" : "Musicians by decade of birth"}</h4>` + decBars(S.kind ? c.decb : c.dec);
+      const gs = GENS.map((g, i) => [g[1], c.gen[i]]).filter(x => x[1] && x[0] !== GENS[GENS.length - 1][1]).sort((a, b) => b[1] - a[1]).slice(0, 5);
+      if (gs.length) h += `<h4>Most tagged genre families</h4><p>${gs.map(g => `${esc(g[0])} ${fmt(g[1])}`).join(", ")}</p>`;
+      h += `<h4>Best known musicians</h4><ol>` + c.top.map(t => `<li>${wdlink(t[1], t[0] || t[1])} <small>${t[2]} sitelinks</small></li>`).join("") + `</ol>`;
+      if (c.topb.length) h += `<h4>Best known bands</h4><ol>` + c.topb.map(t => `<li>${wdlink(t[1], t[0] || t[1])} <small>${t[2]} sitelinks</small></li>`).join("") + `</ol>`;
+    }
+    note(`<b>${esc(CN(iso))}</b>: ${fmt(n)} ${kindWord(n)} on the map`);
+  } else {
+    let n = 0; for (const v of CNT) n += v;
+    const tc = Object.entries(CC_N).sort((a, b) => b[1] - a[1]).slice(0, 8);
+    h = `<h4>${esc(filtLabel())}</h4><div class="big">${fmt(n)} ${kindWord(n)}</div><p class="sub">at ${fmt(CNT.filter(v => v > 0).length)} places</p><h4>Top countries</h4><ol>` + tc.map(([i, v]) => `<li><span class="go" data-c="${i}">${esc(CN(i))}</span> <small>${fmt(v)} (${(100 * v / Math.max(1, n)).toFixed(1)}%)</small></li>`).join("") + `</ol><p class="sub">Click a hexagon for the people or bands there, a country for its numbers, or search a name.</p>`;
+    note("");
+  }
+  box.innerHTML = h; bind(box);
+}
+function decBars(v) {
+  const mx = Math.max(1, ...v), bw = 300 / DECS.length;
+  let s = `<svg viewBox="0 0 300 74" style="width:100%;height:auto" role="img" aria-label="Counts by decade">`;
+  DECS.forEach((d, i) => { const x = i * bw + 1, bh = 52 * (v[i] || 0) / mx; s += `<rect x="${x}" y="${56 - bh}" width="${bw - 2}" height="${bh}" fill="${S.dec === d ? css("--hot") : css("--muted")}" opacity="${S.dec == null || S.dec === d ? .9 : .4}"><title>${decName(d)}: ${v[i] || 0}</title></rect>`; if (i % 5 === 1) s += `<text x="${x}" y="70" class="lab s m">${d}s</text>`; });
+  return s + `</svg>`;
+}
+function toMap() { if (small()) document.getElementById("map").scrollIntoView({ behavior: "smooth", block: "start" }); }
+const FIT = { USA: [[24, -125], [50, -66]], FRA: [[41.3, -5.2], [51.2, 9.6]], NOR: [[57.9, 4.5], [71.2, 31]], RUS: [[41, 27], [70, 140]], NLD: [[50.7, 3.3], [53.6, 7.3]], CHN: [[18, 73], [53.6, 135]], CHL: [[-56, -76], [-17.5, -66]], NZL: [[-47.5, 166], [-34, 179]], ESP: [[35.8, -9.5], [43.9, 4.4]], PRT: [[36.9, -9.6], [42.2, -6.1]], CAN: [[42, -140], [62, -52]], GBR: [[49.8, -8.5], [59, 2]] };
+function fitIso(iso) { const f = WORLD.features.find(x => x.properties.iso === iso); if (FIT[iso]) return map.fitBounds(FIT[iso]); if (f) return map.fitBounds(L.geoJSON(f).getBounds(), { padding: [10, 10], maxZoom: 7 }); const g = SITE.cpos[iso]; if (g) map.setView([g[1], g[0]], 7); }
+function clearSel() { S.sel = null; S.place = null; S.hex = null; S.act = null; }
+function pickCountry(iso, move) { clearSel(); S.sel = iso; if (move) { fitIso(iso); toMap(); } cLayer.setStyle(cStyle); hexes.draw(); side(); }
+function pickHex(h) { clearSel(); S.hex = h.q + "," + h.r; hexes.draw(); side(); }
+function pickPlace(i, move) { clearSel(); S.place = i; const p = PL[i]; if (move) { map.setView([p[1], p[0]], Math.max(map.getZoom(), 8)); toMap(); } hexes.draw(); side(); }
+function resetFilters() { S.g = "all"; S.nt = 0; S.fam = -1; S.gen = -1; S.dec = null; press("gRow", document.querySelector('#gRow .btn[data-g="all"]')); press("nRow", document.querySelector('#nRow .btn[data-n="0"]')); press("genRow", document.querySelector('#genRow .btn[data-x="-1"]')); famRow(); setDec(null); }
+function pickAct(k, move) {
+  if (A_kind(k) !== S.kind) setKind(A_kind(k));
+  if (!keep(k)) resetFilters();
+  clearSel(); S.place = A_pl(k); S.act = k; const p = PL[A_pl(k)];
+  if (move) { map.setView([p[1], p[0]], Math.max(map.getZoom(), 8)); toMap(); }
+  details([k]).then(([d]) => L.popup({ maxWidth: 260 }).setLatLng([p[1], p[0]]).setContent(`<b>${esc(d.n || d.q)}</b><br>${A_kind(k) ? "Formed" : "Born"}${d.y ? " " + d.y : ""} in ${esc(plName(A_pl(k)))}, ${esc(CN(p[3]))}`).openOn(map));
+  hexes.draw(); side();
+}
+function goCity(lat, lon, z) { document.getElementById("atlas").scrollIntoView({ behavior: "smooth" }); setTimeout(() => { clearSel(); map.setView([lat, lon], z || 8); side(); }, 300); }
+(function focusRow() {
+  const row = document.getElementById("focusRow");
+  const F = [["Europe", [[35, -12], [62, 35]]], ["North America", [[14, -128], [56, -60]]], ["Britain and Ireland", [[49.8, -10.5], [59, 2]]], ["Vienna", [[47.9, 15.9], [48.5, 16.9]]], ["Nashville", [[35.9, -87.2], [36.4, -86.4]]], ["Kingston", [[17.85, -77.05], [18.15, -76.6]]], ["Seoul", [[37.3, 126.7], [37.75, 127.3]]], ["Lagos", [[6.3, 3.1], [6.75, 3.7]]], ["Rio", [[-23.1, -43.7], [-22.7, -43.1]]], ["Nordics", [[54.5, 4], [71, 32]]], ["East Asia", [[20, 100], [46, 146]]], ["World", null]];
+  F.forEach(([n, b]) => { const x = document.createElement("button"); x.className = "btn"; x.textContent = n; x.onclick = () => { if (!b) { clearSel(); map.setView([32, 8], small() ? 1 : 2); cLayer.setStyle(cStyle); side(); } else map.fitBounds(b); toMap(); }; row.appendChild(x); });
+})();
+
+/* ---------- search: musicians and bands (3+ sitelinks), places, countries ---------- */
+(function search() {
+  const inp = document.getElementById("q"), sug = document.getElementById("sug"); let opts = [], k = -1, SR = null, NSR = null, NP = null, PC = null, loading = null;
+  const norm = s => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+  const load = () => loading || (loading = fetch("data/map/search.json").then(r => r.json()).then(j => { SR = j.rows; NSR = SR.map(r => norm(r[0])); if (inp.value) { opts = build(inp.value); show(); } }));
+  inp.addEventListener("focus", load);
+  function build(q) {
+    const nq = norm(q); if (nq.length < 2) return [];
+    const out = [];
+    Object.keys(SITE.c).forEach(iso => { const n = CN(iso); if (norm(n).includes(nq)) out.push({ t: "c", n, iso, s: norm(n).startsWith(nq) ? 8 : 3 }); });
+    if (W) {
+      if (!NP) { NP = PL.map(p => norm(p[2] || "")); PC = new Int32Array(PL.length); for (let i = 0; i < PL.length; i++) PC[i] = PSTART[i + 1] - PSTART[i]; }
+      let m = 0; for (let i = 0; i < PL.length; i++) if (NP[i] && NP[i].includes(nq)) { out.push({ t: "p", n: PL[i][2], i, s: (NP[i].startsWith(nq) ? 2.5 : 1) + Math.min(PC[i], 800) / 160 }); if (++m > 300) break; }
+    }
+    if (SR && W) { let m = 0; for (let i = 0; i < SR.length; i++) if (NSR[i].includes(nq)) { const a = SR[i][1]; out.push({ t: "a", n: SR[i][0], a, s: (NSR[i].startsWith(nq) || NSR[i].includes(" " + nq) ? 3 : 1) + Math.min(A_sl(a), 150) / 25 }); if (++m > 400) break; } }
+    return out.sort((a, b) => b.s - a.s).slice(0, 12);
+  }
+  const lab = o => o.t === "c" ? `${esc(o.n)} <span>country</span>` : o.t === "p" ? `${esc(o.n)} <span>place, ${esc(CN(PL[o.i][3]))} · ${fmt(PC[o.i])}</span>` : `${esc(o.n)} <span>${A_kind(o.a) ? "band" : "musician"}, ${esc(plName(A_pl(o.a)))}</span>`;
+  const show = () => { sug.innerHTML = opts.map((o, i) => `<li role="option" aria-selected="${i === k}" data-i="${i}">${lab(o)}</li>`).join("") + (!SR ? `<li><span>loading names...</span></li>` : ""); sug.style.display = opts.length || !SR ? "block" : "none"; };
+  const choose = o => { sug.style.display = "none"; inp.value = o.n; inp.blur(); if (o.t === "c") pickCountry(o.iso, true); else if (o.t === "p") pickPlace(o.i, true); else pickAct(o.a, true); };
+  inp.addEventListener("input", () => { load(); opts = build(inp.value); k = -1; show(); });
+  inp.addEventListener("keydown", e => { if (e.key === "ArrowDown") { k = Math.min(opts.length - 1, k + 1); show(); e.preventDefault(); } else if (e.key === "ArrowUp") { k = Math.max(0, k - 1); show(); e.preventDefault(); } else if (e.key === "Enter" && opts.length) { choose(opts[Math.max(0, k)]); } else if (e.key === "Escape") { sug.style.display = "none"; } });
+  sug.addEventListener("click", e => { const li = e.target.closest("li[data-i]"); if (li) choose(opts[+li.dataset.i]); });
+  document.addEventListener("click", e => { if (!e.target.closest(".searchbox")) sug.style.display = "none"; });
+  window.searchFor = async q => { await load(); inp.value = q; opts = build(q); k = -1; show(); return opts; };
+})();
+map.on("zoomend moveend", () => { placeNames(); legend(); });
+
+/* ---------- charts ---------- */
+function hbars(box, rows, opts) {
+  resp(box, (w, sm) => {
+    const maxLab = Math.max(...rows.map(r => String(r.lab ?? r.v).length)), lw = sm ? Math.min(140, w * .42) : Math.min(230, w * .4), rh = 26, h = rows.length * rh + 10, x0 = lw, x1 = w - 10 - maxLab * 7.4, max = opts.max || Math.max(...rows.map(r => r.v)) || 1;
+    const svg = el("svg", { viewBox: `0 0 ${w} ${h}`, role: "img", "aria-label": opts.aria }, box);
+    rows.forEach((r, i) => {
+      const y = 4 + i * rh, bw = Math.max(r.v > 0 ? 2 : 0, (x1 - x0) * r.v / max);
+      if (r.gap) el("line", { x1: 0, x2: w, y1: y + 1, y2: y + 1, stroke: css("--border"), "stroke-dasharray": "3 3" }, svg);
+      const cut = sm ? 18 : 30;
+      const t = lbl(svg, x0 - 8, y + 16, r.n.length > cut ? r.n.slice(0, cut - 1) + "." : r.n, "lab", "end");
+      const b = el("rect", { x: x0, y: y + 3, width: bw, height: rh - 9, fill: r.c, rx: 2 }, svg);
+      lbl(svg, x0 + bw + 6, y + 16, r.lab ?? fmt(r.v), "lab b");
+      [b, t].forEach(e => { if (r.tip) { e.addEventListener("mousemove", ev => showTip(r.tip, ev.clientX, ev.clientY)); e.addEventListener("mouseleave", hideTip); } if (r.click) { e.style.cursor = "pointer"; e.addEventListener("click", r.click); } });
+    });
+  });
+}
+function lines(box, series, opts) {
+  resp(box, (w, sm) => {
+    const h = sm ? 250 : 300, m = { l: 44, r: sm ? 54 : 120, t: 12, b: 28 }, svg = el("svg", { viewBox: `0 0 ${w} ${h}`, role: "img", "aria-label": opts.aria }, box);
+    const xs = opts.xs, X = i => m.l + i / (xs.length - 1) * (w - m.l - m.r), mx = opts.max, Y = v => h - m.b - v / mx * (h - m.t - m.b);
+    for (let v = 0; v <= mx + 1e-9; v += opts.step) { el("line", { x1: m.l, x2: w - m.r, y1: Y(v), y2: Y(v), stroke: css("--rule") }, svg); lbl(svg, m.l - 6, Y(v) + 4, v + "%", "lab s m", "end"); }
+    const ev = sm ? 4 : 2;
+    xs.forEach((d, i) => { if (i % ev === 0) lbl(svg, X(i), h - 10, d === 1700 ? "<1800" : (sm ? "'" + String(d).slice(2) : d + "s"), "lab s m", "middle"); });
+    const ends = [];
+    series.forEach(s => {
+      const pts = s.v.map((v, i) => v == null ? null : [X(i), Y(v)]).filter(Boolean);
+      el("path", { d: "M" + pts.map(p => p[0].toFixed(1) + " " + p[1].toFixed(1)).join(" L"), fill: "none", stroke: s.c, "stroke-width": s.w || 2.4, "stroke-dasharray": s.dash || "", "stroke-linejoin": "round" }, svg);
+      s.v.forEach((v, i) => { if (v == null) return; const c = el("circle", { cx: X(i), cy: Y(v), r: 3.2, fill: s.c, stroke: css("--card"), "stroke-width": 1 }, svg);
+        c.addEventListener("mousemove", e => showTip(`<b>${esc(s.n)}</b>, ${decName(xs[i])}<br>${v.toFixed(1)}%${s.tipx ? s.tipx(i) : ""}`, e.clientX, e.clientY)); c.addEventListener("mouseleave", hideTip); });
+      const last = pts[pts.length - 1]; ends.push({ y: last[1], s });
+    });
+    ends.sort((a, b) => a.y - b.y); let prev = -99; ends.forEach(e => { const y = Math.max(e.y + 4, prev + 13); prev = y; lbl(svg, w - m.r + 6, y, sm ? e.s.short || e.s.n : e.s.n, "lab s").setAttribute("fill", e.s.c); });
+  });
+}
+function stack100(box, rows, keyLab, aria, horizontal) {
+  resp(box, (w, sm) => {
+    if (horizontal) {
+      const lw = sm ? 120 : 210, rh = 28, h = rows.length * rh + 6, svg = el("svg", { viewBox: `0 0 ${w} ${h}`, role: "img", "aria-label": aria }, box);
+      rows.forEach((r, i) => { const y = 3 + i * rh; let x = lw; lbl(svg, lw - 8, y + 17, sm ? r.short || r.name : r.name, "lab", "end");
+        CONT.forEach(([k, c]) => { const v = r[k] || 0, ww = (w - lw - 6) * v / 100; const b = el("rect", { x, y: y + 3, width: Math.max(0, ww - 1), height: rh - 8, fill: c }, svg);
+          if (ww > 34) lbl(svg, x + 4, y + 17, Math.round(v) + "%", "lab s").setAttribute("fill", "#fff");
+          b.addEventListener("mousemove", ev => showTip(`<b>${esc(r.name)}</b>: ${fmt(r.n)}<br>${CONT.map(([kk]) => `${esc(kk)} ${(r[kk] || 0).toFixed(1)}%`).join("<br>")}`, ev.clientX, ev.clientY)); b.addEventListener("mouseleave", hideTip); x += ww; }); });
+      return;
+    }
+    const h = sm ? 260 : 320, m = { l: 40, r: 8, t: 8, b: 28 }, svg = el("svg", { viewBox: `0 0 ${w} ${h}`, role: "img", "aria-label": aria }, box);
+    const bw = (w - m.l - m.r) / rows.length, Y = v => (h - m.t - m.b) * v / 100;
+    [0, 25, 50, 75, 100].forEach(v => { const y = h - m.b - Y(v); el("line", { x1: m.l, x2: w - m.r, y1: y, y2: y, stroke: css("--rule") }, svg); lbl(svg, m.l - 5, y + 4, v + "%", "lab s m", "end"); });
+    rows.forEach((d, i) => {
+      let y = h - m.b; const x = m.l + i * bw + 1;
+      CONT.forEach(([k, c]) => { const v = d[k + "_pct"] || 0; if (!v) return; const hh = Y(v); y -= hh; const r = el("rect", { x, y, width: bw - 2, height: hh, fill: c }, svg);
+        r.addEventListener("mousemove", ev => showTip(`<b>${keyLab} ${decName(d.dec)}</b>: ${fmt(d.n)}<br>${CONT.map(([kk]) => `${esc(kk)} ${(d[kk + "_pct"] || 0).toFixed(1)}%`).join("<br>")}`, ev.clientX, ev.clientY)); r.addEventListener("mouseleave", hideTip); });
+      if (i % (sm ? 4 : 2) === 0) lbl(svg, x + bw / 2 - 1, h - 10, d.dec === 1700 ? "<1800" : (sm ? "'" + String(d.dec).slice(2) : d.dec + "s"), "lab s m", "middle");
+    });
+  });
+}
+const contLegend = id => document.getElementById(id).innerHTML = CONT.map(([k, c]) => `<span><i style="background:${c}"></i>${esc(k)}</span>`).join("");
+function modeRow(id, draw) { document.querySelectorAll(`#${id} .btn`).forEach(b => b.onclick = () => { press(id, b); draw(b.dataset.m); }); draw(document.querySelector(`#${id} .btn`).dataset.m); }
+function charts() {
+  modeRow("cityMode", mode => { const box = document.getElementById("cityChart"); box.innerHTML = "";
+    const src = mode === "n" ? R.areas.top : mode === "p" ? R.areas.per_capita : mode === "b" ? R.areas.top_b : R.areas.per_capita_b;
+    const v = a => mode === "n" ? a.n : mode === "p" ? a.per100k : mode === "b" ? a.b : a.b_per100k;
+    hbars(box, src.slice(0, 15).map(a => ({ n: a.name, v: v(a), lab: mode.length === 1 && mode !== "p" ? fmt(v(a)) : v(a).toFixed(1), c: mode[0] === "b" ? "#2F5D8C" : mode === "p" ? "#C8962B" : "#B5342B",
+      tip: `<b>${esc(a.name)}</b>, ${esc(CN(a.iso))}<br>${fmt(a.n)} musicians (${a.per100k.toFixed(1)} per 100,000)<br>${fmt(a.b)} bands (${a.b_per100k.toFixed(1)} per 100,000)<br>${fmt(a.notable)} notable musicians${a.w_pct != null ? " · " + a.w_pct.toFixed(0) + "% women" : ""}` })), { aria: "City areas" }); });
+  stack100(document.getElementById("famChart"), R.contrast.fam_cont.map(r => ({ ...r, short: r.name.split(" ")[0] })), "", "Continent of birth by kind of musician", true); contLegend("famLegend");
+  modeRow("conMode", mode => { const box = document.getElementById("conChart"); box.innerHTML = ""; const src = mode === "c" ? R.contrast.composers_pre1900 : mode === "p" ? R.contrast.poprock_post1940 : R.contrast.hiphop;
+    hbars(box, src.slice(0, 12).map(a => ({ n: a.name, v: a.n, lab: `${fmt(a.n)} (${a.pct.toFixed(1)}%)`, c: mode === "c" ? "#2F5D8C" : mode === "p" ? "#B5342B" : "#7A4E9E", tip: `<b>${esc(a.name)}</b>, ${esc(CN(a.iso))}` })), { aria: "Top city areas" }); });
+  // signature genres
+  const t = document.getElementById("sigTable"), SG = R.signature.rows.filter(s => s.n >= 20).sort((a, b) => b.pct - a.pct);
+  t.innerHTML = `<thead><tr><th>Genre</th><th>Home town</th><th class="num">Acts</th><th class="num">Share</th><th>Next</th></tr></thead><tbody>` + SG.map(s => `<tr class="click" data-g="${esc(s.gfam)}" data-lat="${s.lat}" data-lon="${s.lon}"><td>${esc(s.genre)}</td><td>${esc(s.city)}</td><td class="num">${fmt(s.n)}</td><td class="num">${s.pct.toFixed(0)}% <small>of ${fmt(s.of)}</small></td><td>${esc(s.second)} <small>${fmt(s.second_n)}</small></td></tr>`).join("") + `</tbody>`;
+  t.querySelectorAll("tr[data-g]").forEach(r => r.onclick = () => { if (!W) return; const gi = GENS.findIndex(g => g[0] === r.dataset.g); setGen(gi); goCity(+r.dataset.lat, +r.dataset.lon, 7); });
+  const lqRow = document.getElementById("lqRow"), GK = Object.keys(R.genre_cities);
+  lqRow.innerHTML = GK.map((k, i) => `<button class="btn" data-m="${k}" aria-pressed="${i === 0}">${esc(R.genre_cities[k].name)}</button>`).join("");
+  modeRow("lqRow", k => { const box = document.getElementById("lqChart"); box.innerHTML = ""; hbars(box, R.genre_cities[k].lq.map(a => ({ n: a.name, v: a.lq, lab: `${a.lq.toFixed(1)}x · ${fmt(a.n)}`, c: "#6B2D6F", tip: `<b>${esc(a.name)}</b>, ${esc(CN(a.iso))}<br>${fmt(a.n)} acts, ${a.share.toFixed(1)}% of its genre-tagged acts` })), { aria: "Location quotient" }); });
+  modeRow("bpmMode", mode => { const box = document.getElementById("bpmChart"); box.innerHTML = ""; const src = mode === "b" ? R.countries.b_per_m : mode === "m" ? R.countries.metal_per_m : R.countries.per_m;
+    const v = r => mode === "b" ? r.b_per_m : mode === "m" ? r.metal_per_m : r.per_m, nn = r => mode === "b" ? r.b : mode === "m" ? r.metal_b : r.n;
+    hbars(box, src.slice(0, 15).map(r => ({ n: r.name, v: v(r), lab: v(r).toFixed(1), c: mode === "m" ? "#3B1442" : mode === "b" ? "#2F5D8C" : "#C8962B", tip: `<b>${esc(r.name)}</b><br>${fmt(nn(r))} ${mode === "p" ? "musicians" : mode === "m" ? "metal bands" : "bands"}` })), { aria: "Per million people" }); });
+  modeRow("stackMode", mode => { const box = document.getElementById("stackChart"); box.innerHTML = ""; const rows = (mode === "m" ? R.decades.rows.filter(r => r.dec <= 2000) : R.decades.rows_b.filter(r => r.dec >= 1900));
+    stack100(box, rows, mode === "m" ? "Born" : "Formed", "Continent shares by decade"); }); contLegend("contLegend");
+  const D = R.decades.rows.filter(r => r.dec >= 1800 && r.dec <= 2000), xs = D.map(r => r.dec);
+  const RS = [["DEU", "Germany", "#2F5D8C"], ["USA", "United States", "#B5342B"], ["ITA", "Italy", "#3E8E5E"], ["GBR", "United Kingdom", "#6B2D6F"], ["JPN", "Japan", "#C8962B"], ["KOR", "South Korea", "#7A4E9E"], ["BRA", "Brazil", "#2A9BA8"]];
+  lines(document.getElementById("riseChart"), RS.map(([i, n, c]) => ({ n, short: i, c, v: D.map(r => r.c_pct[i]) })), { xs, max: 30, step: 5, aria: "Share of musicians born in selected countries by decade of birth" });
+  document.getElementById("riseLegend").innerHTML = RS.map(([i, n, c]) => `<span><span class="ln" style="border-color:${c}"></span>${esc(n)}</span>`).join("");
+  const Wd = R.women.by_dec.filter(r => r.n >= 300);
+  lines(document.getElementById("womenChart"), [{ n: "All musicians", short: "All", c: WCOL, v: Wd.map(r => r.pct), tipx: k => `<br>${fmt(Wd[k].w)} of ${fmt(Wd[k].n)}` }, { n: "Notable", short: "Notable", c: "#C8962B", dash: "5 4", v: Wd.map(r => r.n_notable >= 30 ? r.pct_notable : null), tipx: k => `<br>of ${fmt(Wd[k].n_notable)} notable` }], { xs: Wd.map(r => r.dec), max: 75, step: 15, aria: "Women's share of musicians by decade of birth" });
+  document.getElementById("womenLegend").innerHTML = `<span><span class="ln" style="border-color:${WCOL}"></span>All musicians</span><span><span class="ln" style="border-color:#C8962B;border-top-style:dashed"></span>Notable (${NOTABLE}+ sitelinks)</span>`;
+  modeRow("wMode", mode => { const box = document.getElementById("wfChart"); box.innerHTML = ""; const src = mode === "f" ? R.women.fam : R.women.by_genre;
+    hbars(box, src.map(r => ({ n: r.name, v: r.pct, lab: r.pct.toFixed(1) + "%", c: WCOL, tip: mode === "f" ? `<b>${esc(r.name)}</b><br>born since 1960: ${r.since1960.toFixed(1)}%` : `<b>${esc(r.name)}</b><br>${fmt(r.n)} with gender recorded` })), { aria: "Women's share", max: 60 }); });
+  modeRow("ctyMode", mode => { const box = document.getElementById("ctyChart"); box.innerHTML = "";
+    const rows = mode === "all" ? R.countries.top.slice(0, 15).map(c => ({ n: c.name, v: c.n, lab: `${fmt(c.n)} (${c.pct.toFixed(1)}%)`, c: CC[SITE.cont[c.iso]] || "#888", tip: `<b>${esc(c.name)}</b><br>${fmt(c.n)} musicians, ${c.w_pct.toFixed(0)}% women<br>${c.per_m.toFixed(0)} per million people<br>${fmt(c.notable)} notable`, click: () => { document.getElementById("atlas").scrollIntoView({ behavior: "smooth" }); setTimeout(() => pickCountry(c.iso, true), 300); } }))
+      : R.countries.top_notable.slice(0, 15).map(c => ({ n: c.name, v: c.n, lab: `${fmt(c.n)} (${c.pct.toFixed(1)}%)`, c: CC[SITE.cont[c.iso]] || "#888" }));
+    hbars(box, rows, { aria: "Musicians by country of birth" }); });
+  const u = document.getElementById("ukTable");
+  u.innerHTML = `<thead><tr><th>City</th><th class="num">Musicians</th><th class="num">per 100k</th><th class="num">Bands</th><th class="num">per 100k</th></tr></thead><tbody>` + R.uk.rows.map(r => `<tr class="click" data-n="${esc(r.name)}"><td>${esc(r.name)}</td><td class="num">${fmt(r.n)}</td><td class="num">${r.per100k.toFixed(1)}</td><td class="num">${fmt(r.b)}</td><td class="num">${r.b_per100k.toFixed(1)}</td></tr>`).join("") + `</tbody>`;
+  u.querySelectorAll("tr[data-n]").forEach(r => r.onclick = () => { const a = SITE.areas.find(x => x[0] === r.dataset.n); if (a) goCity(a[2], a[1], 9); });
+  const CV = R.coverage.by_sl;
+  resp(document.getElementById("covChart"), (w, sm) => {
+    const h = 230, m = { l: 40, r: 8, t: 10, b: 30 }, svg = el("svg", { viewBox: `0 0 ${w} ${h}`, role: "img", "aria-label": "Coverage by sitelinks" }, document.getElementById("covChart"));
+    const gw = (w - m.l - m.r) / CV.length, Y = v => (h - m.t - m.b) * v / 100;
+    [0, 50, 100].forEach(v => { const y = h - m.b - Y(v); el("line", { x1: m.l, x2: w - m.r, y1: y, y2: y, stroke: css("--rule") }, svg); lbl(svg, m.l - 5, y + 4, v + "%", "lab s m", "end"); });
+    CV.forEach((c, i) => { [[c.iso_pct, "#B5342B", "musicians with a birth country", c.n], [c.g_pt_pct, "#2F5D8C", "bands with a formation place on the map", c.g_n]].forEach(([v, col, lab, n], j) => {
+      const x = m.l + i * gw + 4 + j * (gw - 8) / 2, bw = (gw - 8) / 2 - 2, r = el("rect", { x, y: h - m.b - Y(v), width: bw, height: Y(v), fill: col }, svg);
+      if (!sm) lbl(svg, x + bw / 2, h - m.b - Y(v) - 4, Math.round(v) + "%", "lab s", "middle");
+      r.addEventListener("mousemove", ev => showTip(`<b>${esc(c.lab)} sitelinks</b><br>${v.toFixed(1)}% of ${fmt(n)} ${lab}`, ev.clientX, ev.clientY)); r.addEventListener("mouseleave", hideTip); });
+      lbl(svg, m.l + i * gw + gw / 2, h - 10, c.lab, "lab s m", "middle"); });
+  });
+  document.getElementById("covLegend").innerHTML = `<span><i style="background:#B5342B"></i>Musicians: birth country known</span><span><i style="background:#2F5D8C"></i>Bands: formation place on the map</span><span>x axis: sitelinks</span>`;
+}
+
+/* ---------- start ---------- */
+document.getElementById("theme").onclick = () => { const r = document.documentElement; r.dataset.theme = isDark() ? "light" : "dark"; setTiles(); legend(); redraws.forEach(f => f()); hexes.draw(); };
+charts(); sparkDraw(); setTiles(); legend(); side(); placeNames();
+Promise.all([fetch("data/map/places.json").then(r => r.json()), fetch("data/map/acts.bin").then(r => r.arrayBuffer())]).then(([pj, buf]) => {
+  PL = pj.places; W = new Uint32Array(buf); NA = W.length / 2;
+  PSTART = new Int32Array(PL.length + 1).fill(-1); for (let k = NA - 1; k >= 0; k--) PSTART[A_pl(k)] = k; PSTART[PL.length] = NA;
+  for (let i = PL.length - 1; i >= 0; i--) if (PSTART[i] < 0) PSTART[i] = PSTART[i + 1];
+  Z = -1; update(); window.READY = true;
+});
+</script>
+/*FULLSCREEN*/
+</body>
+</html>
