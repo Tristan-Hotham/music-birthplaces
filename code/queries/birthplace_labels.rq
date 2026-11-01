@@ -1,0 +1,11 @@
+PREFIX wd: <http://www.wikidata.org/entity/>
+PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+PREFIX wikibase: <http://wikiba.se/ontology#>
+PREFIX schema: <http://schema.org/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+# English labels of every musician birthplace (raw4/musicians.tsv has no ?bpL column).
+SELECT DISTINCT ?bp ?bpL WHERE {
+  ?p wdt:P31 wd:Q5 ; wdt:P106 ?occ ; wdt:P19 ?bp .
+  ?occ wdt:P279* wd:Q639669 .
+  ?bp rdfs:label ?bpL . FILTER(LANG(?bpL) = "en")
+}

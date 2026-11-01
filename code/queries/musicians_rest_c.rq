@@ -1,0 +1,20 @@
+PREFIX wd: <http://www.wikidata.org/entity/>
+PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+PREFIX wikibase: <http://wikiba.se/ontology#>
+PREFIX schema: <http://schema.org/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+# Musicians, remainder part c: same columns as raw4/musicians.tsv plus ?bpL (birthplace English label).
+# raw4/musicians.tsv stopped at Q23883327 (QLever export timed out); these parts cover the rest in lexicographic Q-id order.
+SELECT ?p ?pL ?occ ?bp ?bpL ?coord ?bpc ?dob ?g ?sl WHERE {
+  ?p wdt:P31 wd:Q5 ; wdt:P106 ?occ .
+  ?occ wdt:P279* wd:Q639669 .
+  FILTER(STR(?p) >= "http://www.wikidata.org/entity/Q6" && STR(?p) < "http://www.wikidata.org/entity/Q8")
+  OPTIONAL { ?p rdfs:label ?pL . FILTER(LANG(?pL) = "en") }
+  OPTIONAL { ?p wdt:P19 ?bp .
+             OPTIONAL { ?bp wdt:P625 ?coord }
+             OPTIONAL { ?bp wdt:P17 ?bpc }
+             OPTIONAL { ?bp rdfs:label ?bpL . FILTER(LANG(?bpL) = "en") } }
+  OPTIONAL { ?p wdt:P569 ?dob }
+  OPTIONAL { ?p wdt:P21 ?g }
+  OPTIONAL { ?p ^schema:about/wikibase:sitelinks ?sl }
+}
